@@ -108,12 +108,10 @@ _start:
 	dsb
 #endif
 
-#if __NDS32_EXT_ZOL__
 	/* Initialize ZOL PSW.AEN.  */
 	mfsr	$r0, $psw
 	ori	$r0, $r0, 0x2000
 	mtsr	$r0, $psw
-#endif
 
 .L_pre_c_init:
 	! call __pre_c_init if provided
