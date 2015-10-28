@@ -65,7 +65,7 @@ TARGETDOC = ../../targetdep.tex
 
 CRT0 = crt0.o
 CRT1 = crt1.o
-
+CRTARG = crtarg.o
 
 
 SYSCALLS1 = _exit.o _open.o _close.o _read.o _write.o
@@ -82,7 +82,7 @@ LIBGLOSS = libgloss.a
 # Host specific makefile fragment comes in here.
 @host_makefile_frag@
 
-all: $(CRT0) $(CRT1) $(LIBGLOSS)
+all: $(CRT0) $(CRT1) $(CRTARG) $(LIBGLOSS)
 
 libgloss.a: $(LIBOBJS)
 	$(AR) $(ARFLAGS) $@ $(LIBOBJS)
@@ -92,6 +92,7 @@ install:
 	mkdir -p $(DESTDIR)$(tooldir)/lib${MULTISUBDIR}
 	$(INSTALL_DATA) $(CRT0) $(DESTDIR)$(tooldir)/lib${MULTISUBDIR}/$(CRT0)
 	$(INSTALL_DATA) $(CRT1) $(DESTDIR)$(tooldir)/lib${MULTISUBDIR}/$(CRT1)
+	$(INSTALL_DATA) $(CRTARG) $(DESTDIR)$(tooldir)/lib${MULTISUBDIR}/$(CRTARG)
 	$(INSTALL_DATA) $(LIBGLOSS) $(DESTDIR)$(tooldir)/lib${MULTISUBDIR}/$(LIBGLOSS)
 
 
@@ -119,6 +120,7 @@ config.status: configure
 # to support SunOS VPATH
 crt0.o: crt0.S
 crt1.o: crt1.S
+crtarg.o: crtarg.c
 _exit.o: _exit.S
 _open.o: _open.S
 _close.o: _close.S
