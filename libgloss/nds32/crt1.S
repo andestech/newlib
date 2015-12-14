@@ -117,8 +117,12 @@ _start:
 	! call __pre_c_init if provided
 	! sample __pre_c_init is in BSP
 	la	$r15, __pre_c_init	! load address of __pre_c_init
+#if __NDS32_ISA_V3__
+	jralnez	$r15			! pre-c-runtime initialization
+#else
 	beqz	$r15, .L_zero_out_bss	! check existence of __pre_c_init
 	jral	$r15			! pre-c-runtime initialization
+#endif
 
 .L_zero_out_bss:
 	/* Zero out the bss section.
@@ -151,8 +155,12 @@ _start:
 	! call __post_c_init if provided
 	! no sample __post_c_init is provided
 	la	$r15, __post_c_init	! load address of __post_c_init
+#if __NDS32_ISA_V3__
+	jralnez	$r15			! post-c-runtime initialization
+#else
 	beqz	$r15, .L_arg_init	! check existence of __post_c_init
 	jral	$r15			! post-c-runtime initialization
+#endif
 
 .L_arg_init:
 	! argc/argv initialization if necessary
@@ -185,8 +193,12 @@ _start:
 	/* Call _call_exit.  */
 	! call _call_exit if necessary; default implementation is in crtexit.c
 	la	$r15, _call_exit		! load address of _call_exit
+#if __NDS32_ISA_V3__
+	jralnez	$r15				! _call_exit will never return
+#else
 	beqz	$r15, .L_terminate_program	! no _call_exit? go exit
 	jral	$r15				! _call_exit will never return
+#endif
 
 .L_terminate_program:
 	/* There are two ways to terminate program:
