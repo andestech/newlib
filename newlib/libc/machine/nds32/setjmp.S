@@ -42,7 +42,6 @@ The usage of thirty-two 32-bit General Purpose Registers (GPR):
 
 Save all callee-save registers and $fp, $gp, $lp and $sp is enough in theory.
 For debugging issue, the layout of jum_buf in here should be in sync with GDB.
-The $r16 ~ $r19 are used to store D0/D1, keep them for backward-compatible.
 */
 
 /* int setjmp(jmp_buf env);  */
@@ -53,11 +52,10 @@ The $r16 ~ $r19 are used to store D0/D1, keep them for backward-compatible.
 setjmp:
 #if __NDS32_REDUCED_REGS__
 	smw.bim	$r6, [$r0], $r10, #0b0000
-	addi	$r0, $r0, #32	/* Leave room to keep jum_buf all the same.  */
+	addi	$r0, $r0, #16	/* leave space to sync layout of jumbuf */
 	smw.bim	$r31, [$r0], $r31, #0b1111
 #else
-	smw.bim	$r6, [$r0], $r14, #0b0000
-	smw.bim	$r16, [$r0], $r19, #0b1111
+	smw.bim	$r6, [$r0], $r14, #0b1111
 #endif
 
 #if __NDS32_EXT_FPU_SP__ || __NDS32_EXT_FPU_DP__
@@ -80,22 +78,15 @@ setjmp:
 	beqz	$r2, .LCFG1_save	/* Branch if $fpcfg.freg = 0b01.  */
 	 /* Fall-through if $fpcfg.freg = 0b11.  */
 .LCFG3_save:
-	fsdi.bi $fd31, [$r0], #8
-	fsdi.bi $fd29, [$r0], #8
-	fsdi.bi $fd27, [$r0], #8
-	fsdi.bi $fd25, [$r0], #8
-	fsdi.bi $fd23, [$r0], #8
-	fsdi.bi $fd21, [$r0], #8
-	fsdi.bi $fd19, [$r0], #8
-	fsdi.bi $fd17, [$r0], #8
 .LCFG2_save:
-	fsdi.bi $fd15, [$r0], #8
-	fsdi.bi $fd13, [$r0], #8
-	fsdi.bi $fd11, [$r0], #8
+	fsdi.bi $fd10, [$r0], #8
 	fsdi.bi $fd9, [$r0], #8
+	fsdi.bi $fd8, [$r0], #8
 .LCFG1_save:
 	fsdi.bi $fd7, [$r0], #8
+	fsdi.bi $fd6, [$r0], #8
 	fsdi.bi $fd5, [$r0], #8
+	fsdi.bi $fd4, [$r0], #8
 .LCFG0_save:
 	fsdi.bi $fd3, [$r0], #8
 #endif
@@ -114,11 +105,10 @@ setjmp:
 longjmp:
 #if __NDS32_REDUCED_REGS__
 	lmw.bim	$r6, [$r0], $r10, #0b0000
-	addi    $r0, $r0, #32
+	addi    $r0, $r0, #16
 	lmw.bim	$r31, [$r0], $r31, #0b1111
 #else
-	lmw.bim	$r6, [$r0], $r14, #0b0000
-	lmw.bim	$r16, [$r0], $r19, #0b1111
+	lmw.bim	$r6, [$r0], $r14, #0b1111
 #endif
 
 #if __NDS32_EXT_FPU_SP__ || __NDS32_EXT_FPU_DP__
@@ -138,22 +128,15 @@ longjmp:
 	beqz	$r2, .LCFG1_restore	/* Branch if $fpcfg.freg = 0b01.  */
 	 /* Fall-through if $fpcfg.freg = 0b11.  */
 .LCFG3_restore:
-	fldi.bi $fd31, [$r0], #8
-	fldi.bi $fd29, [$r0], #8
-	fldi.bi $fd27, [$r0], #8
-	fldi.bi $fd25, [$r0], #8
-	fldi.bi $fd23, [$r0], #8
-	fldi.bi $fd21, [$r0], #8
-	fldi.bi $fd19, [$r0], #8
-	fldi.bi $fd17, [$r0], #8
 .LCFG2_restore:
-	fldi.bi $fd15, [$r0], #8
-	fldi.bi $fd13, [$r0], #8
-	fldi.bi $fd11, [$r0], #8
+	fldi.bi $fd10, [$r0], #8
 	fldi.bi $fd9, [$r0], #8
+	fldi.bi $fd8, [$r0], #8
 .LCFG1_restore:
 	fldi.bi $fd7, [$r0], #8
+	fldi.bi $fd6, [$r0], #8
 	fldi.bi $fd5, [$r0], #8
+	fldi.bi $fd4, [$r0], #8
 .LCFG0_restore:
 	fldi.bi $fd3, [$r0], #8
 #endif
