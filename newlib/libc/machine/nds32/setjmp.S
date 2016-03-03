@@ -108,7 +108,10 @@ longjmp:
 	addi    $r0, $r0, #16
 	lmw.bim	$r31, [$r0], $r31, #0b1111
 #else
-	lmw.bim	$r6, [$r0], $r14, #0b1111
+        /* Bugzilla #11823, in order to cooperate with GDB,
+           don't merge two into one instruction. */
+	lmw.bim	$r6, [$r0], $r14, #0b0000
+	lmw.bim	$sp, [$r0], $sp, #0b1111
 #endif
 
 #if __NDS32_EXT_FPU_SP__ || __NDS32_EXT_FPU_DP__
