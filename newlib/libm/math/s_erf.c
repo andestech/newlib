@@ -23,26 +23,12 @@ INDEX
 INDEX
 	erfcf
 
-ANSI_SYNOPSIS
+SYNOPSIS
 	#include <math.h>
 	double erf(double <[x]>);
 	float erff(float <[x]>);
 	double erfc(double <[x]>);
 	float erfcf(float <[x]>);
-TRAD_SYNOPSIS
-	#include <math.h>
-
-	double erf(<[x]>)
-	double <[x]>;
-
-	float erff(<[x]>)
-	float <[x]>;
-
-	double erfc(<[x]>)
-	double <[x]>;
-
-	float erfcf(<[x]>)
-	float <[x]>;
 
 DESCRIPTION
 	<<erf>> calculates an approximation to the ``error function'',
@@ -166,6 +152,7 @@ PORTABILITY
 
 
 #include "fdlibm.h"
+#include "math_config.h"
 
 #ifndef _DOUBLE_IS_32BITS
 
@@ -366,7 +353,7 @@ sb7  = -2.24409524465858183362e+01; /* 0xC03670E2, 0x42712D62 */
 			__ieee754_exp((z-x)*(z+x)+R/S);
 	    if(hx>0) return r/x; else return two-r/x;
 	} else {
-	    if(hx>0) return tiny*tiny; else return two-tiny;
+	    if(hx>0) return __math_uflow(0); else return two-tiny;
 	}
 }
 

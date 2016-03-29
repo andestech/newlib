@@ -30,9 +30,6 @@
 #include <sys/types.h>
 #include <limits.h>
 
-/* void* type for K&R compilers compatibility */
-#define _VOID_PTR _PTR
-
 /* Encodings aliases file */
 #define ICONV_ALIASES_FNAME   "encoding.aliases"
 /* iconv CCS data path */
@@ -60,10 +57,8 @@ typedef __uint16_t ucs2_t;
 /* 32-bit UCS-4 type */
 typedef __uint32_t ucs4_t;
 
-
 /* The list of built-in encoding names and aliases */
-extern _CONST char *
-_iconv_aliases;
+extern const char _iconv_aliases[];
 
 #endif /* !__ICONV_LIB_LOCAL_H__ */
 

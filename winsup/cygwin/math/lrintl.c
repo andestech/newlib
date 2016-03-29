@@ -5,10 +5,12 @@
  */
 #include <math.h>
 
-long lrintl (long double x) 
+long lrintl (long double x)
 {
   long retval = 0l;
-#if defined(_AMD64_) || defined(__x86_64__) || defined(_X86_) || defined(__i386__)
+#if defined (__x86_64__) && defined (__CYGWIN__)
+  __asm__ __volatile__ ("fistpll %0"  : "=m" (retval) : "t" (x) : "st");
+#elif defined(_AMD64_) || defined(__x86_64__) || defined(_X86_) || defined(__i386__)
   __asm__ __volatile__ ("fistpl %0"  : "=m" (retval) : "t" (x) : "st");
 #elif defined(__arm__) || defined(_ARM_)
     retval = lrint(x);

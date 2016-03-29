@@ -1,7 +1,5 @@
 /* flock.cc.  NT specific implementation of advisory file locking.
 
-   Copyright 2003, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
    This file is part of Cygwin.
 
    This software is a copyrighted work licensed under the terms of the
@@ -216,22 +214,6 @@ allow_others_to_sync ()
       return;
     }
   done = true;
-}
-
-/* Get the handle count of an object. */
-static ULONG
-get_obj_handle_count (HANDLE h)
-{
-  OBJECT_BASIC_INFORMATION obi;
-  NTSTATUS status;
-  ULONG hdl_cnt = 0;
-
-  status = NtQueryObject (h, ObjectBasicInformation, &obi, sizeof obi, NULL);
-  if (!NT_SUCCESS (status))
-    debug_printf ("NtQueryObject: %y", status);
-  else
-    hdl_cnt = obi.HandleCount;
-  return hdl_cnt;
 }
 
 /* Helper struct to construct a local OBJECT_ATTRIBUTES on the stack. */
@@ -598,34 +580,46 @@ lockf_t::from_obj_name (inode_t *node, lockf_t **head, const wchar_t *name)
 lockf_t *
 inode_t::get_all_locks_list ()
 {
-  struct fdbi
-  {
-    DIRECTORY_BASIC_INFORMATION dbi;
-    WCHAR buf[2][NAME_MAX + 1];
-  } f;
+  tmp_pathbuf tp;
   ULONG context;
   NTSTATUS status;
+  BOOLEAN restart = TRUE;
+  bool last_run = false;
   lockf_t newlock, *lock = i_all_lf;
 
-  for (BOOLEAN restart = TRUE;
-       NT_SUCCESS (status = NtQueryDirectoryObject (i_dir, &f, sizeof f, TRUE,
-						    restart, &context, NULL));
-       restart = FALSE)
+  PDIRECTORY_BASIC_INFORMATION dbi_buf = (PDIRECTORY_BASIC_INFORMATION)
+					 tp.w_get ();
+  while (!last_run)
     {
-      if (f.dbi.ObjectName.Length != LOCK_OBJ_NAME_LEN * sizeof (WCHAR))
-	continue;
-      f.dbi.ObjectName.Buffer[LOCK_OBJ_NAME_LEN] = L'\0';
-      if (!newlock.from_obj_name (this, &i_all_lf, f.dbi.ObjectName.Buffer))
-	continue;
-      if (lock - i_all_lf >= MAX_LOCKF_CNT)
+      status = NtQueryDirectoryObject (i_dir, dbi_buf, 65536, FALSE, restart,
+				       &context, NULL);
+      if (!NT_SUCCESS (status))
 	{
-	  system_printf ("Warning, can't handle more than %d locks per file.",
-			 MAX_LOCKF_CNT);
+	  debug_printf ("NtQueryDirectoryObject, status %y", status);
 	  break;
 	}
-      if (lock > i_all_lf)
-	lock[-1].lf_next = lock;
-      new (lock++) lockf_t (newlock);
+      if (status != STATUS_MORE_ENTRIES)
+	last_run = true;
+      restart = FALSE;
+      for (PDIRECTORY_BASIC_INFORMATION dbi = dbi_buf;
+	   dbi->ObjectName.Length > 0;
+	   dbi++)
+	{
+	  if (dbi->ObjectName.Length != LOCK_OBJ_NAME_LEN * sizeof (WCHAR))
+	    continue;
+	  dbi->ObjectName.Buffer[LOCK_OBJ_NAME_LEN] = L'\0';
+	  if (!newlock.from_obj_name (this, &i_all_lf, dbi->ObjectName.Buffer))
+	    continue;
+	  if (lock - i_all_lf >= MAX_LOCKF_CNT)
+	    {
+	      system_printf ("Warning, can't handle more than %d locks per file.",
+			     MAX_LOCKF_CNT);
+	      break;
+	    }
+	  if (lock > i_all_lf)
+	    lock[-1].lf_next = lock;
+	  new (lock++) lockf_t (newlock);
+	}
     }
   /* If no lock has been found, return NULL. */
   if (lock == i_all_lf)
@@ -803,7 +797,7 @@ lockf_t::create_lock_obj ()
 
       pinfo p (myself->ppid);
       if (!p)	/* No access or not a Cygwin parent. */
-      	return;
+	return;
 
       parent_proc = OpenProcess (PROCESS_DUP_HANDLE
 				 | PROCESS_CREATE_THREAD
@@ -1027,7 +1021,7 @@ fhandler_base::lock (int a_op, struct flock *fl)
 
     case SEEK_END:
       if (get_device () != FH_FS)
-      	start = 0;
+	start = 0;
       else
 	{
 	  NTSTATUS status;
@@ -1738,7 +1732,7 @@ lf_split (lockf_t *lock1, lockf_t *lock2, lockf_t **split)
   splitlock = *split;
   assert (splitlock != NULL);
   *split = splitlock->lf_next;
-  memcpy (splitlock, lock1, sizeof *splitlock);
+  memcpy ((void *) splitlock, lock1, sizeof *splitlock);
   /* We have to unset the obj HANDLE here which has been copied by the
      above memcpy, so that the calling function recognizes the new object.
      See post-lf_split handling in lf_setlock and lf_clearlock. */
@@ -2008,18 +2002,16 @@ fhandler_disk_file::mand_lock (int a_op, struct flock *fl)
 	      thr->detach ();
 	      break;
 	    default:
-	      /* Signal arrived. */
-	      /* Starting with Vista, CancelSynchronousIo works, and we wait
-		 for the thread to exit.  lp.status will be either
-		 STATUS_SUCCESS, or STATUS_CANCELLED.  We only call
-		 NtUnlockFile in the first case.
-		 Prior to Vista, CancelSynchronousIo doesn't exist, so we
-		 terminated the thread and always call NtUnlockFile since
-		 lp.status was 0 to begin with. */
+	      /* Signal arrived.
+		 If CancelSynchronousIo works we wait for the thread to exit.
+		 lp.status will be either STATUS_SUCCESS, or STATUS_CANCELLED.
+		 We only call NtUnlockFile in the first case.
+		 If CancelSynchronousIo fails we terminated the thread and
+		 call NtUnlockFile since lp.status was 0 to begin with. */
 	      if (CancelSynchronousIo (thr->thread_handle ()))
 		thr->detach ();
 	      else
-	      	thr->terminate_thread ();
+		thr->terminate_thread ();
 	      if (NT_SUCCESS (lp.status))
 		NtUnlockFile (get_handle (), &io, &offset, &length, 0);
 	      /* Per SUSv4: If a signal is received while fcntl is waiting,

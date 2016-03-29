@@ -1,8 +1,5 @@
 /* security.cc: NT file access control functions
 
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
    Originaly written by Gunther Ebert, gunther.ebert@ixos-leipzig.de
    Completely rewritten by Corinna Vinschen <corinna@vinschen.de>
 
@@ -68,7 +65,9 @@ get_file_sd (HANDLE fh, path_conv &pc, security_descriptor &sd,
 			   fh ? pc.init_reopen_attr (attr, fh)
 			      : pc.get_object_attr (attr, sec_none_nih),
 			   &io, FILE_SHARE_VALID_FLAGS,
-			   FILE_OPEN_FOR_BACKUP_INTENT);
+			   FILE_OPEN_FOR_BACKUP_INTENT
+			   | pc.is_known_reparse_point ()
+			   ? FILE_OPEN_REPARSE_POINT : 0);
       if (!NT_SUCCESS (status))
 	{
 	  sd.free ();
@@ -235,7 +234,9 @@ set_file_sd (HANDLE fh, path_conv &pc, security_descriptor &sd, bool is_chown)
 				  : pc.get_object_attr (attr, sec_none_nih),
 			       &io,
 			       FILE_SHARE_VALID_FLAGS,
-			       FILE_OPEN_FOR_BACKUP_INTENT);
+			       FILE_OPEN_FOR_BACKUP_INTENT
+			       | pc.is_known_reparse_point ()
+			       ? FILE_OPEN_REPARSE_POINT : 0);
 	  if (!NT_SUCCESS (status))
 	    {
 	      fh = NULL;
@@ -413,7 +414,7 @@ create_object_sd_from_attribute (uid_t uid, gid_t gid, mode_t attribute,
 				 security_descriptor &sd)
 {
   return set_posix_access (attribute, uid, gid, NULL, 0, sd, false)
-  	 ? 0 : -1;
+	 ? 0 : -1;
 }
 
 int
@@ -452,6 +453,7 @@ set_created_file_access (HANDLE handle, path_conv &pc, mode_t attr)
   tmp_pathbuf tp;
   aclent_t *aclp;
   int nentries, idx;
+  bool std_acl;
 
   if (!get_file_sd (handle, pc, sd, true))
     {
@@ -460,8 +462,8 @@ set_created_file_access (HANDLE handle, path_conv &pc, mode_t attr)
 	attr |= S_IFDIR;
       attr_rd = attr;
       aclp = (aclent_t *) tp.c_get ();
-      if ((nentries = get_posix_access (sd, &attr_rd, &uid, &gid,
-					aclp, MAX_ACL_ENTRIES)) >= 0)
+      if ((nentries = get_posix_access (sd, &attr_rd, &uid, &gid, aclp,
+					MAX_ACL_ENTRIES, &std_acl)) >= 0)
 	{
 	  if (S_ISLNK (attr))
 	    {
@@ -469,8 +471,7 @@ set_created_file_access (HANDLE handle, path_conv &pc, mode_t attr)
 	      aclp[0].a_perm = (attr >> 6) & S_IRWXO;
 	      if ((idx = searchace (aclp, nentries, GROUP_OBJ)) >= 0)
 		aclp[idx].a_perm = (attr >> 3) & S_IRWXO;
-	      if (nentries > MIN_ACL_ENTRIES
-		  && (idx = searchace (aclp, nentries, CLASS_OBJ)) >= 0)
+	      if ((idx = searchace (aclp, nentries, CLASS_OBJ)) >= 0)
 		aclp[idx].a_perm = (attr >> 3) & S_IRWXO;
 	      if ((idx = searchace (aclp, nentries, OTHER_OBJ)) >= 0)
 		aclp[idx].a_perm = attr & S_IRWXO;
@@ -480,13 +481,10 @@ set_created_file_access (HANDLE handle, path_conv &pc, mode_t attr)
 	      /* Overwrite ACL permissions as required by POSIX 1003.1e
 		 draft 17. */
 	      aclp[0].a_perm &= (attr >> 6) & S_IRWXO;
-	      /* Deliberate deviation from POSIX 1003.1e here.  We're not
-		 writing CLASS_OBJ *or* GROUP_OBJ, but both.  Otherwise we're
-		 going to be in constant trouble with user expectations. */
-	      if ((idx = searchace (aclp, nentries, GROUP_OBJ)) >= 0)
+	      if ((idx = searchace (aclp, nentries, CLASS_OBJ)) >= 0)
 		aclp[idx].a_perm &= (attr >> 3) & S_IRWXO;
-	      if (nentries > MIN_ACL_ENTRIES
-		  && (idx = searchace (aclp, nentries, CLASS_OBJ)) >= 0)
+	      if (std_acl
+		  && (idx = searchace (aclp, nentries, GROUP_OBJ)) >= 0)
 		aclp[idx].a_perm &= (attr >> 3) & S_IRWXO;
 	      if ((idx = searchace (aclp, nentries, OTHER_OBJ)) >= 0)
 		aclp[idx].a_perm &= attr & S_IRWXO;

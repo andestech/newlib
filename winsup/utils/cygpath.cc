@@ -1,6 +1,4 @@
 /* cygpath.cc -- convert pathnames between Windows and Unix format
-   Copyright 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010, 2011, 2012, 2013, 2015 Red Hat, Inc.
 
 This file is part of Cygwin.
 
@@ -23,8 +21,6 @@ details. */
 #include <wctype.h>
 #include <errno.h>
 
-#define _WIN32_WINNT 0x0602
-#define WINVER 0x0602
 #define NOCOMATTRIBUTE
 #include <windows.h>
 #include <userenv.h>
@@ -77,7 +73,7 @@ static struct option long_options[] = {
 
 static char options[] = "ac:df:hilmMopst:uUVwAC:DHOPSWF:";
 
-static void
+static void __attribute__ ((__noreturn__))
 usage (FILE * stream, int status)
 {
   if (!ignore_flag || !status)
@@ -416,6 +412,7 @@ get_short_paths (char *path)
       exit (1);
     }
   my_wcstombs (ptr, sbuf, len);
+  free (sbuf);
   return ptr;
 }
 
@@ -807,7 +804,7 @@ print_version ()
 {
   printf ("cygpath (cygwin) %d.%d.%d\n"
 	  "Path Conversion Utility\n"
-	  "Copyright (C) 1998 - %s Red Hat, Inc.\n"
+	  "Copyright (C) 1998 - %s Cygwin Authors\n"
 	  "This is free software; see the source for copying conditions.  There is NO\n"
 	  "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
 	  CYGWIN_VERSION_DLL_MAJOR / 1000,
@@ -971,7 +968,6 @@ do_options (int argc, char **argv, int from_file)
 
 	case 'h':
 	  usage (stdout, 0);
-	  break;
 
 	case 'V':
 	  print_version ();

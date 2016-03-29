@@ -1,8 +1,5 @@
 /* init.cc
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011, 2012, 2013, 2015 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -22,13 +19,12 @@ unsigned threadfunc_ix[8];
 static bool dll_finished_loading;
 #define OLDFUNC_OFFSET -1
 
+#ifdef __i386__
+__attribute__ ((force_align_arg_pointer))
+#endif
 static void WINAPI
 threadfunc_fe (VOID *arg)
 {
-#ifndef __x86_64__
-  (void)__builtin_return_address(1);
-  asm volatile ("andl $-16,%%esp" ::: "%esp");
-#endif
   _cygtls::call ((DWORD (*)  (void *, void *)) TlsGetValue (_my_oldfunc), arg);
 }
 
@@ -57,14 +53,9 @@ munge_threadfunc ()
     {
       char *threadfunc = NULL;
 
-      /* This call to NtQueryInformationThread crashes under WOW64 on
-         64 bit XP and Server 2003. */
-      if (wincap.wow64_has_secondary_stack ())
-	threadfunc = ebp[threadfunc_ix[0]];
-      else
-	NtQueryInformationThread (NtCurrentThread (),
-				  ThreadQuerySetWin32StartAddress,
-				  &threadfunc, sizeof threadfunc, NULL);
+      NtQueryInformationThread (NtCurrentThread (),
+				ThreadQuerySetWin32StartAddress,
+				&threadfunc, sizeof threadfunc, NULL);
       if (!search_for || threadfunc == search_for)
 	{
 	  search_for = NULL;
@@ -78,6 +69,10 @@ munge_threadfunc ()
 
 void dll_crt0_0 ();
 
+/* Non-static fake variable so GCC doesn't second-guess if we *really*
+   need the alloca'd space in the DLL_PROCESS_ATTACH case below... */
+void *alloca_dummy;
+
 extern "C" BOOL WINAPI
 dll_entry (HANDLE h, DWORD reason, void *static_load)
 {
@@ -90,6 +85,16 @@ dll_entry (HANDLE h, DWORD reason, void *static_load)
 
       cygwin_hmodule = (HMODULE) h;
       dynamically_loaded = (static_load == NULL);
+
+      /* Starting with adding the POSIX-1.2008 per-thread locale functionality,
+	 we need an initalized _REENT area even for the functions called from
+	 dll_crt0_0.  Most importantly, we need the _REENT->_locale pointer
+	 initialized to NULL, so subsequent calls to locale-specific functions
+	 will always fall back to __global_locale, rather then crash due to
+	 _REENT->_locale having an arbitrary value. */
+      alloca_dummy = alloca (CYGTLS_PADSIZE);
+      ZeroMemory (alloca_dummy, CYGTLS_PADSIZE);
+      memcpy (_REENT, _GLOBAL_REENT, sizeof (struct _reent));
 
       dll_crt0_0 ();
       _my_oldfunc = TlsAlloc ();

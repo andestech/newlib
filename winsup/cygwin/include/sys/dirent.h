@@ -1,8 +1,5 @@
 /* Posix dirent.h for WIN32.
 
-   Copyright 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2010, 2012,
-   2013 Red Hat, Inc.
-
    This software is a copyrighted work licensed under the terms of the
    Cygwin license.  Please consult the file "CYGWIN_LICENSE" for
    details. */
@@ -18,7 +15,7 @@
 
 #define __DIRENT_VERSION	2
 
-#ifndef __x86_64__
+#ifdef __i386__
 #pragma pack(push,4)
 #endif
 #define _DIRENT_HAVE_D_TYPE
@@ -31,7 +28,7 @@ struct dirent
   __uint32_t __d_internal1;
   char d_name[NAME_MAX + 1];
 };
-#ifndef __x86_64__
+#ifdef __i386__
 #pragma pack(pop)
 #endif
 
@@ -43,12 +40,12 @@ struct dirent
 #define __DIRENT_COOKIE 0xdede4242
 #endif
 
-#ifndef __x86_64__
+#ifdef __i386__
 #pragma pack(push,4)
 #endif
 typedef struct __DIR
 {
-  /* This is first to set alignment in non _COMPILING_NEWLIB case.  */
+  /* This is first to set alignment in non _LIBC case.  */
   unsigned long __d_cookie;
   struct dirent *__d_dirent;
   char *__d_dirname;			/* directory name with trailing '*' */
@@ -59,39 +56,8 @@ typedef struct __DIR
   void *__fh;
   unsigned __flags;
 } DIR;
-#ifndef __x86_64__
+#ifdef __i386__
 #pragma pack(pop)
-#endif
-
-DIR *opendir (const char *);
-DIR *fdopendir (int);
-struct dirent *readdir (DIR *);
-int readdir_r (DIR * __restrict, struct dirent * __restrict,
-	       struct dirent ** __restrict);
-void rewinddir (DIR *);
-int closedir (DIR *);
-
-int dirfd (DIR *);
-
-#if __MISC_VISIBLE || __XSI_VISIBLE
-#ifndef __INSIDE_CYGWIN__
-long telldir (DIR *);
-void seekdir (DIR *, long loc);
-#endif
-#endif
-
-#if __MISC_VISIBLE || __POSIX_VISIBLE >= 200809
-int scandir (const char *__dir,
-	     struct dirent ***__namelist,
-	     int (*select) (const struct dirent *),
-	     int (*compar) (const struct dirent **, const struct dirent **));
-int alphasort (const struct dirent **__a, const struct dirent **__b);
-#endif
-
-#if __GNU_VISIBLE
-int scandirat (int __dirfd, const char *__dir, struct dirent ***__namelist,
-	       int (*select) (const struct dirent *),
-	       int (*compar) (const struct dirent **, const struct dirent **));
 #endif
 
 #if __BSD_VISIBLE

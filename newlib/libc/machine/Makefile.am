@@ -1,7 +1,5 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus
-
 SUBDIRS = $(machine_dir) .
 
 if HAVE_MACHINE_DIR
@@ -21,6 +19,8 @@ endif
 $(machine_dir)/lib.a:
 
 doc:
+
+docbook:
 
 ACLOCAL_AMFLAGS = -I ../.. -I ../../..
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host

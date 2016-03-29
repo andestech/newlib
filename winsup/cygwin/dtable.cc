@@ -1,8 +1,5 @@
 /* dtable.cc: file descriptor support.
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -77,10 +74,10 @@ dtable::extend (size_t howmuch, size_t min)
   size_t new_size = size + howmuch;
   fhandler_base **newfds;
 
-  if (new_size <= OPEN_MAX_MAX)
+  if (new_size <= OPEN_MAX)
     /* ok */;
-  else if (size < OPEN_MAX_MAX && min < OPEN_MAX_MAX)
-    new_size = OPEN_MAX_MAX;
+  else if (size < OPEN_MAX && min < OPEN_MAX)
+    new_size = OPEN_MAX;
   else
     {
       set_errno (EMFILE);
@@ -285,7 +282,7 @@ dtable::init_std_file_from_handle (int fd, HANDLE handle)
   CONSOLE_SCREEN_BUFFER_INFO buf;
   DCB dcb;
   unsigned bin = O_BINARY;
-  device dev = {};
+  device dev;
 
   first_fd_for_open = 0;
 
@@ -307,14 +304,14 @@ dtable::init_std_file_from_handle (int fd, HANDLE handle)
 	dev.parse (name);
       else if (strcmp (name, ":sock:") == 0
 	       /* NtQueryObject returns an error when called on an LSP socket
-		  handle.  While fdsock now tries to fetch the underlying
-		  base socket, this only works on Vista and later. */
+		  handle.  fhandler_socket::set_socket_handle tries to fetch
+		  the underlying base socket, but this might fail. */
 	       || (strcmp (name, unknown_file) == 0
 		   && !::getsockopt ((SOCKET) handle, SOL_SOCKET, SO_RCVBUF,
 				     (char *) &rcv, &len)))
 	{
 	  /* socket */
-	  dev = *tcp_dev;
+	  dev = *af_inet_dev;
 	  name[0] = '\0';
 	}
       else if (fd == 0)
@@ -372,7 +369,7 @@ dtable::init_std_file_from_handle (int fd, HANDLE handle)
       int openflags = O_BINARY;
 
       /* Console windows are no kernel objects up to Windows 7/2008R2, so the
-      	 access mask returned by NtQueryInformationFile is meaningless.  CMD
+	 access mask returned by NtQueryInformationFile is meaningless.  CMD
 	 always hands down stdin handles as R/O handles, but our tty slave
 	 sides are R/W. */
       if (fh->is_tty ())
@@ -409,8 +406,17 @@ dtable::init_std_file_from_handle (int fd, HANDLE handle)
 	}
       if (!fh->init (handle, access, bin))
 	api_fatal ("couldn't initialize fd %d for %s", fd, fh->get_name ());
+      if (fh->ispipe ())
+	{
+	  fhandler_pipe *fhp = (fhandler_pipe *) fh;
+	  fhp->set_pipe_buf_size ();
+	  /* Set read pipe always to nonblocking */
+	  fhp->set_pipe_non_blocking (fhp->get_device () == FH_PIPER ?
+				      true : fhp->is_nonblocking ());
+	}
 
-      fh->open_setup (openflags);
+      if (!fh->open_setup (openflags))
+	api_fatal ("open_setup failed, %E");
       fh->usecount = 0;
       cygheap->fdtab[fd] = fh;
       cygheap->fdtab[fd]->inc_refcnt ();
@@ -454,7 +460,7 @@ build_fh_dev (const device& dev, const char *unix_name)
   if (unix_name)
     pc.set_posix (unix_name);
   else
-    pc.set_posix (dev.name);
+    pc.set_posix (dev.name ());
   return build_fh_pc (pc);
 }
 
@@ -479,13 +485,8 @@ fh_alloc (path_conv& pc)
     case DEV_FLOPPY_MAJOR:
     case DEV_CDROM_MAJOR:
     case DEV_SD_MAJOR:
-    case DEV_SD1_MAJOR:
-    case DEV_SD2_MAJOR:
-    case DEV_SD3_MAJOR:
-    case DEV_SD4_MAJOR:
-    case DEV_SD5_MAJOR:
-    case DEV_SD6_MAJOR:
-    case DEV_SD7_MAJOR:
+    case DEV_SD1_MAJOR ... DEV_SD7_MAJOR:
+    case DEV_SD_HIGHPART_START ... DEV_SD_HIGHPART_END:
       fh = cnew (fhandler_dev_floppy);
       break;
     case DEV_TAPE_MAJOR:
@@ -522,14 +523,17 @@ fh_alloc (path_conv& pc)
 	case FH_PIPEW:
 	  fh = cnew (fhandler_pipe);
 	  break;
-	case FH_TCP:
-	case FH_UDP:
-	case FH_ICMP:
-	case FH_UNIX:
-	case FH_STREAM:
-	case FH_DGRAM:
-	  fh = cnew (fhandler_socket);
+	case FH_INET:
+	  fh = cnew (fhandler_socket_inet);
 	  break;
+	case FH_LOCAL:
+	  fh = cnew (fhandler_socket_local);
+	  break;
+#ifdef __WITH_AF_UNIX
+	case FH_UNIX:
+	  fh = cnew (fhandler_socket_unix);
+	  break;
+#endif /* __WITH_AF_UNIX */
 	case FH_FS:
 	  fh = cnew (fhandler_disk_file);
 	  break;
@@ -557,8 +561,10 @@ fh_alloc (path_conv& pc)
 	  fh = cnew (fhandler_registry);
 	  break;
 	case FH_PROCESS:
-	case FH_PROCESSFD:
 	  fh = cnew (fhandler_process);
+	  break;
+	case FH_PROCESSFD:
+	  fh = cnew (fhandler_process_fd);
 	  break;
 	case FH_PROCNET:
 	  fh = cnew (fhandler_procnet);
@@ -577,6 +583,15 @@ fh_alloc (path_conv& pc)
 	  break;
 	case FH_CYGDRIVE:
 	  fh = cnew (fhandler_cygdrive);
+	  break;
+	case FH_SIGNALFD:
+	  fh = cnew (fhandler_signalfd);
+	  break;
+	case FH_TIMERFD:
+	  fh = cnew (fhandler_timerfd);
+	  break;
+	case FH_MQUEUE:
+	  fh = cnew (fhandler_mqueue);
 	  break;
 	case FH_TTY:
 	  if (!pc.isopen ())
@@ -597,9 +612,6 @@ fh_alloc (path_conv& pc)
 	      if (fh->dev () != FH_NADA)
 		fh->set_name ("/dev/tty");
 	    }
-	  break;
-	case FH_KMSG:
-	  fh = cnew (fhandler_mailslot);
 	  break;
       }
     }
@@ -647,16 +659,16 @@ build_fh_pc (path_conv& pc)
   else if ((fh->archetype = cygheap->fdtab.find_archetype (fh->dev ())))
     {
       debug_printf ("found an archetype for %s(%d/%d) io_handle %p", fh->get_name (), fh->dev ().get_major (), fh->dev ().get_minor (),
-		    fh->archetype->get_io_handle ());
+		    fh->archetype->get_handle ());
       if (!fh->get_name ())
-	fh->set_name (fh->archetype->dev ().name);
+	fh->set_name (fh->archetype->dev ().name ());
     }
   else if (cygwin_finished_initializing && !pc.isopen ())
     fh->set_name (pc);
   else
     {
       if (!fh->get_name ())
-	fh->set_name (fh->dev ().native);
+	fh->set_name (fh->dev ().native ());
       fh->archetype = fh->clone ();
       debug_printf ("created an archetype (%p) for %s(%d/%d)", fh->archetype, fh->get_name (), fh->dev ().get_major (), fh->dev ().get_minor ());
       fh->archetype->archetype = NULL;
@@ -679,18 +691,15 @@ out:
 fhandler_base *
 dtable::dup_worker (fhandler_base *oldfh, int flags)
 {
-  /* Don't call set_name in build_fh_pc.  It will be called in
-     fhandler_base::operator= below.  Calling it twice will result
-     in double allocation. */
   fhandler_base *newfh = oldfh->clone ();
   if (!newfh)
-    debug_printf ("build_fh_pc failed");
+    debug_printf ("clone failed");
   else
     {
       if (!oldfh->archetype)
-	newfh->set_io_handle (NULL);
+	newfh->set_handle (NULL);
 
-      newfh->pc.reset_conv_handle ();
+      newfh->pc.close_conv_handle ();
       if (oldfh->dup (newfh, flags))
 	{
 	  delete newfh;
@@ -708,7 +717,7 @@ dtable::dup_worker (fhandler_base *oldfh, int flags)
 	  /* The O_CLOEXEC flag enforces close-on-exec behaviour. */
 	  newfh->set_close_on_exec (!!(flags & O_CLOEXEC));
 	  debug_printf ("duped '%s' old %p, new %p", oldfh->get_name (),
-			oldfh->get_io_handle (), newfh->get_io_handle ());
+			oldfh->get_handle (), newfh->get_handle ());
 	}
     }
   return newfh;
@@ -720,7 +729,6 @@ dtable::dup3 (int oldfd, int newfd, int flags)
   int res = -1;
   fhandler_base *newfh = NULL;	// = NULL to avoid an incorrect warning
 
-  MALLOC_CHECK;
   debug_printf ("dup3 (%d, %d, %y)", oldfd, newfd, flags);
   lock ();
   bool do_unlock = true;
@@ -739,7 +747,7 @@ dtable::dup3 (int oldfd, int newfd, int flags)
       set_errno (EBADF);
       goto done;
     }
-  if (newfd >= OPEN_MAX_MAX || newfd < 0)
+  if (newfd >= OPEN_MAX || newfd < 0)
     {
       syscall_printf ("new fd out of bounds: %d", newfd);
       set_errno (EBADF);
@@ -766,7 +774,7 @@ dtable::dup3 (int oldfd, int newfd, int flags)
     }
 
   debug_printf ("newfh->io_handle %p, oldfh->io_handle %p, new win32_name %p, old win32_name %p",
-		newfh->get_io_handle (), fds[oldfd]->get_io_handle (), newfh->get_win32_name (), fds[oldfd]->get_win32_name ());
+		newfh->get_handle (), fds[oldfd]->get_handle (), newfh->get_win32_name (), fds[oldfd]->get_win32_name ());
 
   if (!not_open (newfd))
     close (newfd);
@@ -786,7 +794,6 @@ dtable::dup3 (int oldfd, int newfd, int flags)
   do_unlock = unlock_on_return;
 
 done:
-  MALLOC_CHECK;
   if (do_unlock)
     unlock ();
   syscall_printf ("%R = dup3(%d, %d, %y)", res, oldfd, newfd, flags);
@@ -859,12 +866,13 @@ dtable::set_file_pointers_for_exec ()
 {
 /* This is not POSIX-compliant so the function is only called for
    non-Cygwin processes. */
-  LONG off_high = 0;
+  LARGE_INTEGER eof = { QuadPart: 0 };
+
   lock ();
   fhandler_base *fh;
   for (size_t i = 0; i < size; i++)
     if ((fh = fds[i]) != NULL && fh->get_flags () & O_APPEND)
-      SetFilePointer (fh->get_handle (), 0, &off_high, FILE_END);
+      SetFilePointerEx (fh->get_handle (), eof, NULL, FILE_END);
   unlock ();
 }
 
@@ -892,12 +900,12 @@ dtable::fixup_after_exec ()
 	/* Close the handle if it's close-on-exec or if an error was detected
 	   (typically with opening a console in a gui app) by fixup_after_exec.
 	 */
-	if (fh->close_on_exec () || (!fh->nohandle () && !fh->get_io_handle ()))
+	if (fh->close_on_exec () || (!fh->nohandle () && !fh->get_handle ()))
 	  fixup_close (i, fh);
 	else if (fh->get_popen_pid ())
 	  close (i);
 	else if (i == 0)
-	  SetStdHandle (std_consts[i], fh->get_io_handle ());
+	  SetStdHandle (std_consts[i], fh->get_handle ());
 	else if (i <= 2)
 	  SetStdHandle (std_consts[i], fh->get_output_handle ());
       }
@@ -914,7 +922,7 @@ dtable::fixup_after_fork (HANDLE parent)
 	  {
 	    debug_printf ("fd %d (%s)", i, fh->get_name ());
 	    fh->fixup_after_fork (parent);
-	    if (!fh->nohandle () && !fh->get_io_handle ())
+	    if (!fh->nohandle () && !fh->get_handle ())
 	      {
 		/* This should actually never happen but it's here to make sure
 		   we don't crash due to access of an unopened file handle.  */
@@ -923,7 +931,7 @@ dtable::fixup_after_fork (HANDLE parent)
 	      }
 	  }
 	if (i == 0)
-	  SetStdHandle (std_consts[i], fh->get_io_handle ());
+	  SetStdHandle (std_consts[i], fh->get_handle ());
 	else if (i <= 2)
 	  SetStdHandle (std_consts[i], fh->get_output_handle ());
       }

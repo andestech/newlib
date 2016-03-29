@@ -1,8 +1,5 @@
 /* regtool.cc
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008,
-   2009, 2010, 2011, 2015 Red Hat Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -16,7 +13,6 @@ details. */
 #include <wchar.h>
 #include <getopt.h>
 #include <locale.h>
-#define WINVER 0x0502
 #include <windows.h>
 #include <sys/cygwin.h>
 #include <cygwin/version.h>
@@ -92,7 +88,7 @@ char **argv;
 HKEY key;
 wchar_t *value;
 
-static void
+static void __attribute__ ((__noreturn__))
 usage (FILE *where = stderr)
 {
   fprintf (where, ""
@@ -169,11 +165,13 @@ usage (FILE *where = stderr)
       "  machine  HKLM  HKEY_LOCAL_MACHINE\n"
       "  users    HKU   HKEY_USERS\n"
       "\n"
-      "If the keyname starts with a forward slash ('/'), the forward slash is used\n"
-      "as separator and the backslash can be used as escape character.\n");
+      "You can use forward slash ('/') as a separator instead of backslash, in\n"
+      "that case backslash is treated as an escape character.\n"
+      "You can also supply the registry path prefix /proc/registry{,32,64}/ to\n"
+      "use path completion.\n");
       fprintf (where, ""
       "Example:\n"
-      "%s list '/machine/SOFTWARE/Classes/MIME/Database/Content Type/audio\\/wav'\n\n", prog_name);
+      "%s list '/HKLM/SOFTWARE/Classes/MIME/Database/Content Type/audio\\/wav'\n\n", prog_name);
     }
   if (where == stderr)
     fprintf (where,
@@ -188,7 +186,7 @@ print_version ()
 {
   printf ("regtool (cygwin) %d.%d.%d\n"
 	  "Registry tool\n"
-	  "Copyright (C) 2000 - %s Red Hat, Inc.\n"
+	  "Copyright (C) 2000 - %s Cygwin Authors\n"
 	  "This is free software; see the source for copying conditions.  There is NO\n"
 	  "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
 	  CYGWIN_VERSION_DLL_MAJOR / 1000,
@@ -200,13 +198,14 @@ print_version ()
 void
 Fail (unsigned int rv)
 {
-  char *buf;
+  wchar_t *buf;
+
   if (!quiet)
     {
-      FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER
-		     | FORMAT_MESSAGE_FROM_SYSTEM,
-		     0, rv, 0, (CHAR *) & buf, 0, 0);
-      fprintf (stderr, "Error (%d): %s\n", rv, buf);
+      FormatMessageW (FORMAT_MESSAGE_ALLOCATE_BUFFER
+		      | FORMAT_MESSAGE_FROM_SYSTEM,
+		      0, rv, 0, (WCHAR *)& buf, 0, 0);
+      fprintf (stderr, "Error (%d): %ls\n", rv, buf);
       LocalFree (buf);
     }
   exit (1);
@@ -351,6 +350,15 @@ find_key (int howmanyparts, REGSAM access, int option = 0)
 	*h = *e;
       *h = 0;
       n = e;
+    }
+  else if (strncmp ("\\proc\\registry", n, strlen ("\\proc\\registry")) == 0)
+    {
+      /* skip /proc/registry{,32,64}/ prefix */
+      n += strlen ("\\proc\\registry");
+      if (strncmp ("64", n, strlen ("64")) == 0)
+        n += strlen ("64");
+      else if (strncmp ("32", n, strlen ("32")) == 0)
+        n += strlen ("32");
     }
   while (*n != '\\')
     n++;
@@ -826,10 +834,7 @@ int
 cmd_load ()
 {
   if (!argv[1])
-    {
-      usage ();
-      return 1;
-    }
+    usage ();
   find_key (1, 0);
   return 0;
 }
@@ -838,10 +843,7 @@ int
 cmd_unload ()
 {
   if (argv[1])
-    {
-      usage ();
-      return 1;
-    }
+    usage ();
   find_key (1, 0);
   return 0;
 }
@@ -850,10 +852,7 @@ int
 cmd_save ()
 {
   if (!argv[1])
-    {
-      usage ();
-      return 1;
-    }
+    usage ();
   /* REG_OPTION_BACKUP_RESTORE is necessary to save /HKLM/SECURITY */
   find_key (1, KEY_QUERY_VALUE, REG_OPTION_BACKUP_RESTORE);
   ssize_t len = cygwin_conv_path (CCP_POSIX_TO_WIN_W, argv[1], NULL, 0);
@@ -871,10 +870,7 @@ int
 cmd_restore ()
 {
   if (!argv[1])
-    {
-      usage ();
-      return 1;
-    }
+    usage ();
   /* REG_OPTION_BACKUP_RESTORE is necessary to restore /HKLM/SECURITY */
   find_key (1, KEY_ALL_ACCESS, REG_OPTION_BACKUP_RESTORE);
   ssize_t len = cygwin_conv_path (CCP_POSIX_TO_WIN_W, argv[1], NULL, 0);
@@ -1000,6 +996,4 @@ main (int argc, char **_argv)
 	return commands[i].func ();
       }
   usage ();
-
-  return 0;
 }

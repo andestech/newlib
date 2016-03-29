@@ -35,20 +35,18 @@
 #include <limits.h>
 #include <sys/cygwin.h>
 #include <cygwin/version.h>
-#define _WIN32_WINNT 0x0602
-#define WINVER 0x0602
 #include <windows.h>
 
 #define LOCALE_ALIAS		"/usr/share/locale/locale.alias"
 #define LOCALE_ALIAS_LINE_LEN	255
 
-void
+static void __attribute__ ((__noreturn__))
 usage ()
 {
   printf (
 "Usage: %1$s [-amvhV]\n"
 "   or: %1$s [-ck] NAME\n"
-"   or: %1$s [-usfnU]\n"
+"   or: %1$s [-iusfnU]\n"
 "\n"
 "Get locale-specific information.\n"
 "\n"
@@ -65,6 +63,7 @@ usage ()
 "\n"
 "Default locale information:\n"
 "\n"
+"  -i, --input          Print current input locale\n"
 "  -u, --user           Print locale of user's default UI language\n"
 "  -s, --system         Print locale of system default UI language\n"
 "  -f, --format         Print locale of user's regional format settings\n"
@@ -77,20 +76,16 @@ usage ()
 "  -h, --help           This text\n"
 "  -V, --version        Print program version and exit\n\n",
   program_invocation_short_name);
+  exit (0);
 }
 
 void
 print_version ()
 {
-  printf ("locale (cygwin) %d.%d.%d\n"
-	  "Get locale-specific information\n"
-	  "Copyright (C) 2010 - %s Red Hat, Inc.\n"
-	  "This is free software; see the source for copying conditions.  There is NO\n"
-	  "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
+  printf ("locale (cygwin) %d.%d.%d\n",
 	  CYGWIN_VERSION_DLL_MAJOR / 1000,
 	  CYGWIN_VERSION_DLL_MAJOR % 1000,
-	  CYGWIN_VERSION_DLL_MINOR,
-	  strrchr (__DATE__, ' ') + 1);
+	  CYGWIN_VERSION_DLL_MINOR);
 }
 
 struct option longopts[] = {
@@ -98,6 +93,7 @@ struct option longopts[] = {
   {"category-name", no_argument, NULL, 'c'},
   {"format", no_argument, NULL, 'f'},
   {"help", no_argument, NULL, 'h'},
+  {"input", no_argument, NULL, 'i'},
   {"keyword-name", no_argument, NULL, 'k'},
   {"charmaps", no_argument, NULL, 'm'},
   {"no-unicode", no_argument, NULL, 'n'},
@@ -108,7 +104,7 @@ struct option longopts[] = {
   {"version", no_argument, NULL, 'V'},
   {0, no_argument, NULL, 0}
 };
-const char *opts = "acfhkmnsuUvV";
+const char *opts = "acfhikmnsuUvV";
 
 int
 getlocale (LCID lcid, char *name)
@@ -327,15 +323,6 @@ print_all_locales (int verbose)
 		  wcscpy (loc_list[lcnt].country, country);
 		}
 	      c = stpcpy (loc, name);
-	      /* Convert old sr_SP silently to sr_CS on old systems.
-		 Make sure sr_CS country is in recent shape. */
-	      if (lang == LANG_SERBIAN
-		  && (sublang == SUBLANG_SERBIAN_LATIN
-		      || sublang == SUBLANG_SERBIAN_CYRILLIC))
-		{
-		  c = stpcpy (loc, "sr_CS");
-		  wcscpy (country, L"Serbia and Montenegro (Former)");
-		}
 	      /* Now check certain conditions to figure out if that
 		 locale requires a modifier. */
 	      if (lang == LANG_SERBIAN && !strncmp (loc, "sr_", 3)
@@ -380,31 +367,6 @@ print_all_locales (int verbose)
 	      else
 		continue;
 	      add_locale (loc, language, country);
-	    }
-	}
-      /* Check Serbian language for the available territories.  Up to
-	 Server 2003 we only had sr_SP (silently converted to sr_CS
-	 above), in Vista we had only sr_CS.  First starting with W7 we
-	 have the actual sr_RS and sr_ME.  However, all of them are
-	 supported on all systems in Cygwin.  So we fake them here, if
-	 they are missing. */
-      if (lang == LANG_SERBIAN)
-	{
-	  int sr_CS_idx = -1;
-	  int sr_RS_idx = -1;
-	  int i;
-
-	  for (i = 0; i < lcnt; ++ i)
-	    if (!strcmp (loc_list[i].loc, "sr_CS"))
-	      sr_CS_idx = i;
-	    else if (!strcmp (loc_list[i].loc, "sr_RS"))
-	      sr_RS_idx = i;
-	  if (sr_CS_idx > 0 && sr_RS_idx == -1)
-	    {
-	      add_locale ("sr_RS@latin", L"Serbian (Latin)", L"Serbia");
-	      add_locale ("sr_RS", L"Serbian (Cyrillic)", L"Serbia");
-	      add_locale ("sr_ME@latin", L"Serbian (Latin)", L"Montenegro");
-	      add_locale ("sr_ME", L"Serbian (Cyrillic)", L"Montenegro");
 	    }
 	}
     }
@@ -802,6 +764,9 @@ main (int argc, char **argv)
       case 'm':
 	maps = 1;
 	break;
+      case 'i':
+	lcid = (UINT_PTR) GetKeyboardLayout (0) & 0xffff;
+	break;
       case 's':
 	lcid = GetSystemDefaultUILanguage ();
 	break;
@@ -822,7 +787,6 @@ main (int argc, char **argv)
 	break;
       case 'h':
 	usage ();
-	return 0;
       case 'V':
 	print_version ();
 	return 0;

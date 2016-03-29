@@ -1,8 +1,5 @@
 /* dtable.h: fd table definition.
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011, 2012, 2013, 2014 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -13,8 +10,6 @@ details. */
 
 /* Initial and increment values for cygwin's fd table */
 #define NOFILE_INCR    32
-/* Maximum size we allow expanding to.  */
-#define OPEN_MAX_MAX (100 * NOFILE_INCR)
 
 #include "thread.h"
 #include "sync.h"
@@ -25,9 +20,6 @@ class suffix_info;
 class dtable
 {
   fhandler_base **fds;
-#ifdef NEWVFORK
-  fhandler_base **fds_on_hold;
-#endif
   fhandler_base **archetypes;
   unsigned narchetypes;
   unsigned farchetype;
@@ -77,9 +69,6 @@ public:
   void stdio_init ();
   void get_debugger_info ();
   void set_file_pointers_for_exec ();
-#ifdef NEWVFORK
-  bool in_vfork_cleanup () {return fds_on_hold == fds;}
-#endif
   fhandler_base *find_archetype (device& dev);
   fhandler_base **add_archetype ();
   void delete_archetype (fhandler_base *);

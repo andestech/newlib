@@ -1,8 +1,5 @@
 /* path.cc
 
-   Copyright 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012,
-   2013, 2015 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -23,11 +20,11 @@ details. */
 #include <malloc.h>
 #include <wchar.h>
 #include "path.h"
-#include "../cygwin/include/cygwin/version.h"
-#include "../cygwin/include/sys/mount.h"
+#include <cygwin/version.h>
+#include <cygwin/bits.h>
+#include <sys/mount.h>
 #define _NOMNTENT_MACROS
-#include "../cygwin/include/mntent.h"
-#include "testsuite.h"
+#include <mntent.h>
 #ifdef FSTAB_ONLY
 #include <sys/cygwin.h>
 #endif
@@ -166,7 +163,7 @@ is_symlink (HANDLE fh)
     }
   else /* magic == SYMLINK_MAGIC */
     {
-      if (!local.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM)
+      if (!(local.dwFileAttributes & FILE_ATTRIBUTE_SYSTEM))
 	goto out; /* Not a Cygwin symlink. */
       char buf[sizeof (SYMLINK_COOKIE) - 1];
       SetFilePointer (fh, 0, 0, FILE_BEGIN);
@@ -184,7 +181,7 @@ out:
 
 /* Assumes is_symlink(fh) is true */
 bool
-readlink (HANDLE fh, char *path, int maxlen)
+readlink (HANDLE fh, char *path, size_t maxlen)
 {
   DWORD rv;
   char *buf, *cp;
@@ -223,12 +220,12 @@ readlink (HANDLE fh, char *path, int maxlen)
 	}
       if (*(PWCHAR) cp == 0xfeff)	/* BOM */
 	{
-	  len = wcstombs (NULL, (wchar_t *) (cp + 2), 0);
-	  if (len == (size_t) -1 || len + 1 > maxlen)
+	  size_t wlen = wcstombs (NULL, (wchar_t *) (cp + 2), 0);
+	  if (wlen == (size_t) -1 || wlen + 1 > maxlen)
 	    return false;
-	  wcstombs (path, (wchar_t *) (cp + 2), len + 1);
+	  wcstombs (path, (wchar_t *) (cp + 2), wlen + 1);
 	}
-      else if (len + 1 > maxlen)
+      else if ((size_t) (len + 1) > maxlen)
 	return false;
       else
 	memcpy (path, cp, len);
@@ -241,12 +238,12 @@ readlink (HANDLE fh, char *path, int maxlen)
       cp = buf + strlen (SYMLINK_COOKIE);
       if (*(PWCHAR) cp == 0xfeff)	/* BOM */
 	{
-	  len = wcstombs (NULL, (wchar_t *) (cp + 2), 0);
-	  if (len == (size_t) -1 || len + 1 > maxlen)
+	  size_t wlen = wcstombs (NULL, (wchar_t *) (cp + 2), 0);
+	  if (wlen == (size_t) -1 || wlen + 1 > maxlen)
 	    return false;
-	  wcstombs (path, (wchar_t *) (cp + 2), len + 1);
+	  wcstombs (path, (wchar_t *) (cp + 2), wlen + 1);
 	}
-      else if (fi.nFileSizeLow - strlen (SYMLINK_COOKIE) > (unsigned) maxlen)
+      else if (fi.nFileSizeLow - strlen (SYMLINK_COOKIE) > maxlen)
 	return false;
       else
 	strcpy (path, cp);
@@ -257,14 +254,8 @@ readlink (HANDLE fh, char *path, int maxlen)
 }
 #endif /* !FSTAB_ONLY */
 
-#ifndef TESTSUITE
 mnt_t mount_table[255];
 int max_mount_entry;
-#else
-#  define TESTSUITE_MOUNT_TABLE
-#  include "testsuite.h"
-#  undef TESTSUITE_MOUNT_TABLE
-#endif
 
 inline void
 unconvert_slashes (char* name)
@@ -273,9 +264,6 @@ unconvert_slashes (char* name)
     *name++ = '\\';
 }
 
-/* These functions aren't called when defined(TESTSUITE) which results
-   in a compiler warning.  */
-#ifndef TESTSUITE
 inline char *
 skip_ws (char *in)
 {
@@ -295,7 +283,7 @@ find_ws (char *in)
 inline char *
 conv_fstab_spaces (char *field)
 {
-  register char *sp = field;
+  char *sp = field;
   while ((sp = strstr (sp, "\\040")) != NULL)
     {
       *sp++ = ' ';
@@ -314,7 +302,7 @@ static struct opt
 {
   {"acl", MOUNT_NOACL, 1},
   {"auto", 0, 0},
-  {"binary", MOUNT_BINARY, 0},
+  {"binary", MOUNT_TEXT, 1},
   {"cygexec", MOUNT_CYGWIN_EXEC, 0},
   {"dos", MOUNT_DOS, 0},
   {"exec", MOUNT_EXEC, 0},
@@ -326,7 +314,7 @@ static struct opt
   {"override", MOUNT_OVERRIDE, 0},
   {"posix=0", MOUNT_NOPOSIX, 0},
   {"posix=1", MOUNT_NOPOSIX, 1},
-  {"text", MOUNT_BINARY, 1},
+  {"text", MOUNT_TEXT, 0},
   {"user", MOUNT_SYSTEM, 1}
 };
 
@@ -489,27 +477,26 @@ from_fstab (bool user, PWCHAR path, PWCHAR path_end)
 	*(native_path += 2) = '\\';
       m->posix = strdup ("/");
       m->native = strdup (native_path);
-      m->flags = MOUNT_SYSTEM | MOUNT_BINARY | MOUNT_IMMUTABLE
-		 | MOUNT_AUTOMATIC;
+      m->flags = MOUNT_SYSTEM | MOUNT_IMMUTABLE | MOUNT_AUTOMATIC;
       ++m;
       /* Create default /usr/bin and /usr/lib entries. */
       char *trail = strchr (native_path, '\0');
       strcpy (trail, "\\bin");
       m->posix = strdup ("/usr/bin");
       m->native = strdup (native_path);
-      m->flags = MOUNT_SYSTEM | MOUNT_BINARY | MOUNT_AUTOMATIC;
+      m->flags = MOUNT_SYSTEM | MOUNT_AUTOMATIC;
       ++m;
       strcpy (trail, "\\lib");
       m->posix = strdup ("/usr/lib");
       m->native = strdup (native_path);
-      m->flags = MOUNT_SYSTEM | MOUNT_BINARY | MOUNT_AUTOMATIC;
+      m->flags = MOUNT_SYSTEM | MOUNT_AUTOMATIC;
       ++m;
       /* Create a default cygdrive entry.  Note that this is a user entry.
 	 This allows to override it with mount, unless the sysadmin created
 	 a cygdrive entry in /etc/fstab. */
       m->posix = strdup (CYGWIN_INFO_CYGDRIVE_DEFAULT_PREFIX);
       m->native = strdup ("cygdrive prefix");
-      m->flags = MOUNT_BINARY | MOUNT_CYGDRIVE;
+      m->flags = MOUNT_CYGDRIVE;
       ++m;
       max_mount_entry = m - mount_table;
     }
@@ -558,10 +545,11 @@ from_fstab (bool user, PWCHAR path, PWCHAR path_end)
   CloseHandle (h);
 }
 #endif /* !FSTAB_ONLY */
-#endif /* !TESTSUITE */
 
 #ifndef FSTAB_ONLY
-
+#ifdef TESTSUITE
+#define read_mounts testsuite_read_mounts
+#else
 static int
 mnt_sort (const void *a, const void *b)
 {
@@ -583,9 +571,6 @@ extern "C" WCHAR cygwin_dll_path[];
 static void
 read_mounts ()
 {
-/* If TESTSUITE is defined, bypass this whole function as a harness
-   mount table will be provided.  */
-#ifndef TESTSUITE
   HKEY setup_key;
   LONG ret;
   DWORD len;
@@ -657,8 +642,8 @@ read_mounts ()
   from_fstab (false, path, path_end);
   from_fstab (true, path, path_end);
   qsort (mount_table, max_mount_entry, sizeof (mnt_t), mnt_sort);
-#endif /* !defined(TESTSUITE) */
 }
+#endif
 
 /* Return non-zero if PATH1 is a prefix of PATH2.
    Both are assumed to be of the same path style and / vs \ usage.
@@ -675,7 +660,7 @@ read_mounts ()
 */
 
 static int
-path_prefix_p (const char *path1, const char *path2, int len1)
+path_prefix_p (const char *path1, const char *path2, size_t len1)
 {
   /* Handle case where PATH1 has trailing '/' and when it doesn't.  */
   if (len1 > 0 && isslash (path1[len1 - 1]))
@@ -762,6 +747,11 @@ concat (const char *s, ...)
   return vconcat (s, v);
 }
 
+#ifdef TESTSUITE
+#undef GetCurrentDirectory
+#define GetCurrentDirectory testsuite_getcwd
+#endif
+
 /* This is a helper function for when vcygpath is passed what appears
    to be a relative POSIX path.  We take a Win32 CWD (either as specified
    in 'cwd' or as retrieved with GetCurrentDirectory() if 'cwd' is NULL)
@@ -781,7 +771,7 @@ rel_vconcat (const char *cwd, const char *s, va_list v)
       cwd = pathbuf;
     }
 
-  int max_len = -1;
+  size_t max_len = 0;
   mnt_t *m, *match = NULL;
 
   for (m = mount_table; m->posix; m++)
@@ -789,7 +779,7 @@ rel_vconcat (const char *cwd, const char *s, va_list v)
       if (m->flags & MOUNT_CYGDRIVE)
 	continue;
 
-      int n = strlen (m->native);
+      size_t n = strlen (m->native);
       if (n < max_len || !path_prefix_p (m->native, cwd, n))
 	continue;
       max_len = n;
@@ -824,11 +814,12 @@ rel_vconcat (const char *cwd, const char *s, va_list v)
 static char *
 vcygpath (const char *cwd, const char *s, va_list v)
 {
-  int max_len = -1;
+  size_t max_len = 0;
   mnt_t *m, *match = NULL;
 
   if (!max_mount_entry)
     read_mounts ();
+
   char *path;
   if (s[0] == '.' && isslash (s[1]))
     s += 2;
@@ -846,15 +837,23 @@ vcygpath (const char *cwd, const char *s, va_list v)
 
   for (m = mount_table; m->posix; m++)
     {
-      int n = strlen (m->posix);
+      size_t n = strlen (m->posix);
       if (n < max_len || !path_prefix_p (m->posix, path, n))
 	continue;
-      if ((m->flags & MOUNT_CYGDRIVE)
-	  && ((int) strlen (path) < n + 2
-	      || path[n] != '/'
-	      || !isalpha (path[n + 1])
-	      || path[n + 2] != '/'))
-	continue;
+      if (m->flags & MOUNT_CYGDRIVE)
+	{
+	  if (strlen (path) < n + 2)
+	    continue;
+	  /* If cygdrive path is just '/', fix n for followup evaluation. */
+	  if (n == 1)
+	    n = 0;
+	  if (path[n] != '/')
+	    continue;
+	  if (!isalpha (path[n + 1]))
+	    continue;
+	  if (path[n + 2] != '/')
+	    continue;
+	}
       max_len = n;
       match = m;
     }
@@ -862,7 +861,7 @@ vcygpath (const char *cwd, const char *s, va_list v)
   char *native;
   if (match == NULL)
     native = strdup (path);
-  else if (max_len == (int) strlen (path))
+  else if (max_len == strlen (path))
     native = strdup (match->native);
   else if (match->flags & MOUNT_CYGDRIVE)
     {
@@ -907,8 +906,10 @@ extern "C" FILE *
 setmntent (const char *, const char *)
 {
   m = mount_table;
+
   if (!max_mount_entry)
     read_mounts ();
+
   return NULL;
 }
 
@@ -929,7 +930,7 @@ getmntent (FILE *)
   strcpy (mnt.mnt_type,
 	  (char *) ((m->flags & MOUNT_SYSTEM) ? "system" : "user"));
 
-  if (!(m->flags & MOUNT_BINARY))
+  if (m->flags & MOUNT_TEXT)
     strcpy (mnt.mnt_opts, (char *) "text");
   else
     strcpy (mnt.mnt_opts, (char *) "binary");

@@ -1,7 +1,5 @@
 /* heap.h: Cygwin heap manager definitions.
 
-   Copyright 2000, 2001, 2002 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -12,7 +10,6 @@ details. */
 
 /* Heap management. */
 void heap_init ();
-void malloc_init ();
 
 #define inheap(s) \
   (cygheap->user_heap.ptr && s \

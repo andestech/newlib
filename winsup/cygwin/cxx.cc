@@ -1,7 +1,5 @@
 /* cxx.cc
 
-   Copyright 2002, 2003, 2005, 2009 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -83,16 +81,6 @@ extern "C" void
 __cxa_pure_virtual (void)
 {
   api_fatal ("pure virtual method called");
-}
-
-extern "C" void
-__cxa_guard_acquire ()
-{
-}
-
-extern "C" void
-__cxa_guard_release ()
-{
 }
 
 /* These routines are made available as last-resort fallbacks

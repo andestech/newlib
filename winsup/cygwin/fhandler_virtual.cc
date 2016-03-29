@@ -1,8 +1,5 @@
 /* fhandler_virtual.cc: base fhandler class for virtual filesystems
 
-   Copyright 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012,
-   2013 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -48,7 +45,7 @@ fhandler_virtual::opendir (int fd)
   DIR *res = NULL;
   size_t len;
 
-  if (exists () <= 0)
+  if (!virt_ftype_isdir (exists ()))
     set_errno (ENOTDIR);
   else if ((len = strlen (get_name ())) > PATH_MAX - 3)
     set_errno (ENAMETOOLONG);
@@ -185,7 +182,7 @@ fhandler_virtual::read (void *ptr, size_t& len)
 {
   if (len == 0)
     return;
-  if (openflags & O_DIROPEN)
+  if (diropen)
     {
       set_errno (EISDIR);
       len = (size_t) -1;

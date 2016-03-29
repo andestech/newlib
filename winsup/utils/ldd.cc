@@ -5,11 +5,11 @@
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
 
-	* Redistributions of source code must retain the above copyright
-	notice, this list of conditions and the following disclaimer.
-	* Neither the name of the owner nor the names of its
-	contributors may be used to endorse or promote products derived from
-	this software without specific prior written permission.
+  1. Redistributions of source code must retain the above copyright
+     notice, this list of conditions and the following disclaimer.
+  2. Redistributions in binary form must reproduce the above copyright
+     notice, this list of conditions and the following disclaimer in the
+     documentation and/or other materials provided with the distribution.
 
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER AND CONTRIBUTORS "AS
   IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,9 +37,10 @@
 #include <unistd.h>
 #include <libgen.h>
 
-#define _WIN32_WINNT 0x0501
 #include <windows.h>
+#include <winternl.h>
 #include <imagehlp.h>
+#define PSAPI_VERSION 1
 #include <psapi.h>
 
 struct option longopts[] =
@@ -67,7 +68,7 @@ error (const char *fmt, ...)
   exit (1);
 }
 
-static void
+static void __attribute__ ((__noreturn__))
 usage ()
 {
   printf ("Usage: %s [OPTION]... FILE...\n\
@@ -83,6 +84,7 @@ Print shared library dependencies\n\
   -v, --verbose           print all information\n\
                           (currently unimplemented)\n",
 	   program_invocation_short_name);
+  exit (0);
 }
 
 static void
@@ -212,28 +214,10 @@ start_process (const wchar_t *fn, bool& isdll)
   set_errno_and_return (1);
 }
 
-static int
-set_entry_point_break ()
-{
-  HMODULE hm;
-  DWORD cbe;
-  SIZE_T cbw;
-  if (!EnumProcessModules (hProcess, &hm, sizeof (hm), &cbe) || !cbe)
-    set_errno_and_return (1);
-
-  MODULEINFO mi = {};
-  if (!GetModuleInformation (hProcess, hm, &mi, sizeof (mi)) || !mi.EntryPoint)
-    set_errno_and_return (1);
-
-  static const unsigned char int3 = 0xcc;
-  if (!WriteProcessMemory (hProcess, mi.EntryPoint, &int3, 1, &cbw) || cbw != 1)
-    set_errno_and_return (1);
-  return 0;
-}
-
 struct dlls
   {
     LPVOID lpBaseOfDll;
+    HANDLE hFile;
     struct dlls *next;
   };
 
@@ -275,7 +259,17 @@ print_dlls (dlls *dll, const wchar_t *dllfn, const wchar_t *process_fn)
       char *fn;
       wchar_t *fullpath = get_module_filename (hProcess, (HMODULE) dll->lpBaseOfDll);
       if (!fullpath)
-	fn = strdup ("???");
+	{
+	  // if no path found yet, try getting it from an open handle to the DLL
+	  wchar_t dllname[PATH_MAX];
+	  if (GetFinalPathNameByHandleW (dll->hFile, dllname, PATH_MAX, 0))
+	    {
+	      fn = tocyg (dllname);
+	      saw_file (basename (fn));
+	    }
+	  else
+	    fn = strdup ("???");
+	}
       else if (dllfn && wcscmp (fullpath, dllfn) == 0)
 	{
 	  free (fullpath);
@@ -318,11 +312,12 @@ report (const char *in_fn, bool multiple)
 
   DEBUG_EVENT ev;
 
-  unsigned dll_count = 0;
-
   dlls dll_list = {};
   dlls *dll_last = &dll_list;
   const wchar_t *process_fn = NULL;
+
+  int res = 0;
+
   while (1)
     {
       bool exitnow = false;
@@ -331,11 +326,34 @@ report (const char *in_fn, bool multiple)
 	break;
       switch (ev.dwDebugEventCode)
 	{
+	case CREATE_PROCESS_DEBUG_EVENT:
+	  if (!isdll)
+	    {
+	      PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER) alloca (4096);
+	      PIMAGE_NT_HEADERS nt_header;
+	      PVOID entry_point;
+	      static const unsigned char int3 = 0xcc;
+	      SIZE_T bytes;
+
+	      if (!ReadProcessMemory (hProcess,
+				      ev.u.CreateProcessInfo.lpBaseOfImage,
+				      dos_header, 4096, &bytes))
+		print_errno_error_and_return (in_fn);
+
+	      nt_header = PIMAGE_NT_HEADERS (PBYTE (dos_header)
+					     + dos_header->e_lfanew);
+	      entry_point = (PVOID)
+		  ((caddr_t) ev.u.CreateProcessInfo.lpBaseOfImage
+		   + nt_header->OptionalHeader.AddressOfEntryPoint);
+
+	      if (!WriteProcessMemory (hProcess, entry_point, &int3, 1, &bytes))
+		print_errno_error_and_return (in_fn);
+	    }
+	  break;
 	case LOAD_DLL_DEBUG_EVENT:
-	  if (!isdll && ++dll_count == 2)
-	    set_entry_point_break ();
 	  dll_last->next = (dlls *) malloc (sizeof (dlls));
 	  dll_last->next->lpBaseOfDll = ev.u.LoadDll.lpBaseOfDll;
+	  dll_last->next->hFile = ev.u.LoadDll.hFile;
 	  dll_last->next->next = NULL;
 	  dll_last = dll_last->next;
 	  break;
@@ -352,14 +370,18 @@ report (const char *in_fn, bool multiple)
 	      break;
 	    case STATUS_BREAKPOINT:
 	      if (!isdll)
-		cont = DBG_EXCEPTION_NOT_HANDLED;
+		TerminateProcess (hProcess, 0);
 	      break;
 	    }
-	  break;
-	case CREATE_THREAD_DEBUG_EVENT:
-	  TerminateProcess (hProcess, 0);
+	  if (ev.u.Exception.ExceptionRecord.ExceptionFlags &
+	      EXCEPTION_NONCONTINUABLE) {
+	    res = 1;
+	    goto print_and_exit;
+	  }
 	  break;
 	case EXIT_PROCESS_DEBUG_EVENT:
+	  if (ev.u.ExitProcess.dwExitCode != 0)
+	    process_fn = fn_win;
 print_and_exit:
 	  print_dlls (&dll_list, isdll ? fn_win : NULL, process_fn);
 	  exitnow = true;
@@ -376,7 +398,7 @@ print_and_exit:
 	break;
     }
 
-  return 0;
+  return res;
 }
 
 int
@@ -398,7 +420,6 @@ main (int argc, char **argv)
 	exit (1);
       case 'h':
 	usage ();
-	exit (0);
       case 'V':
 	print_version ();
 	return 0;

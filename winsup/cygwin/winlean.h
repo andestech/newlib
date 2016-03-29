@@ -1,7 +1,5 @@
 /* winlean.h - Standard "lean" windows include
 
-   Copyright 2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -79,7 +77,7 @@ details. */
 /* So-called "Microsoft Account" SIDs (S-1-11-...) have a netbios domain name
    "MicrosoftAccounts".  The new "Application Container SIDs" (S-1-15-...)
    have a netbios domain name "APPLICATION PACKAGE AUTHORITY"
-   
+
    The problem is, DNLEN is 15, but these domain names have a length of 16
    resp. 29 chars :-P  So we override DNLEN here to be 31, so that calls
    to LookupAccountSid/Name don't fail if the buffer is based on DNLEN.
@@ -95,4 +93,23 @@ details. */
    use this function.  Use GetSystemWindowsDirectoryW. */
 #define GetWindowsDirectoryW dont_use_GetWindowsDirectory
 #define GetWindowsDirectoryA dont_use_GetWindowsDirectory
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* For the extended memory API. */
+#if __MINGW64_VERSION_MAJOR < 8
+#error "Version >= 8 of the w32api headers is required"
+#endif
+
+/* IsWow64Process2 should be declared in <w32api/wow64apiset.h> but
+   isn't yet. */
+BOOL WINAPI IsWow64Process2(HANDLE, USHORT *, USHORT *);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /*_WINLEAN_H*/

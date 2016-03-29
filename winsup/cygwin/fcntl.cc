@@ -1,8 +1,5 @@
 /* fcntl.cc: fcntl syscall
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2005, 2008, 2009,
-   2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -46,7 +43,7 @@ fcntl64 (int fd, int cmd, ...)
 	 case which is covered here by always reading the arg with
 	 sizeof (intptr_t) == sizeof (long) == sizeof (void*) which matches
 	 all targets.
-	 
+
 	 However, the POSIX standard defines all numerical args as type int.
 	 If we take that literally, we had a (small) problem on 64 bit, since
 	 sizeof (void*) != sizeof (int).  If we would like to follow POSIX more
@@ -60,7 +57,7 @@ fcntl64 (int fd, int cmd, ...)
 	{
 	case F_DUPFD:
 	case F_DUPFD_CLOEXEC:
-	  if (arg >= 0 && arg < OPEN_MAX_MAX)
+	  if (arg >= 0 && arg < OPEN_MAX)
 	    {
 	      int flags = cmd == F_DUPFD_CLOEXEC ? O_CLOEXEC : 0;
 	      res = cygheap->fdtab.dup3 (fd, cygheap_fdnew ((arg) - 1), flags);
@@ -82,10 +79,7 @@ fcntl64 (int fd, int cmd, ...)
   return res;
 }
 
-#ifdef __x86_64__
-EXPORT_ALIAS (fcntl64, fcntl)
-EXPORT_ALIAS (fcntl64, _fcntl)
-#else
+#ifdef __i386__
 extern "C" int
 _fcntl (int fd, int cmd, ...)
 {
@@ -124,4 +118,7 @@ _fcntl (int fd, int cmd, ...)
   __endtry
   return -1;
 }
+#else
+EXPORT_ALIAS (fcntl64, fcntl)
+EXPORT_ALIAS (fcntl64, _fcntl)
 #endif

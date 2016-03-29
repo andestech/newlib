@@ -35,7 +35,6 @@ THIS SOFTWARE.
 #include <string.h>
 #include "mprec.h"
 #include "gdtoa.h"
-#include "gd_qnan.h"
 
 #include "locale.h"
 
@@ -53,11 +52,7 @@ fivesbits[] = {	 0,  3,  5,  7, 10, 12, 14, 17, 19, 21,
 		};
 
 static _Bigint *
-#ifdef KR_headers
-sum(p, a, b) struct _reent *p; _Bigint *a; _Bigint *b;
-#else
-sum(struct _reent *p, _Bigint *a, _Bigint *b)
-#endif
+sum (struct _reent *p, _Bigint *a, _Bigint *b)
 {
 	_Bigint *c;
 	__ULong carry, *xc, *xa, *xb, *xe, y;
@@ -68,7 +63,7 @@ sum(struct _reent *p, _Bigint *a, _Bigint *b)
 	if (a->_wds < b->_wds) {
 		c = b; b = a; a = c;
 		}
-	c = Balloc(p, a->_k);
+	c = eBalloc(p, a->_k);
 	c->_wds = a->_wds;
 	carry = 0;
 	xa = a->_x;
@@ -108,7 +103,7 @@ sum(struct _reent *p, _Bigint *a, _Bigint *b)
 #endif
 	if (carry) {
 		if (c->_wds == c->_maxwds) {
-			b = Balloc(p, c->_k + 1);
+			b = eBalloc(p, c->_k + 1);
 			Bcopy(b, c);
 			Bfree(p, c);
 			c = b;
@@ -119,11 +114,7 @@ sum(struct _reent *p, _Bigint *a, _Bigint *b)
 	}
 
 static void
-#ifdef KR_headers
-rshift(b, k) _Bigint *b; int k;
-#else
-rshift(_Bigint *b, int k)
-#endif
+rshift (_Bigint *b, int k)
 {
 	__ULong *x, *x1, *xe, y;
 	int n;
@@ -152,11 +143,7 @@ rshift(_Bigint *b, int k)
 	}
 
 static int
-#ifdef KR_headers
-trailz(b) _Bigint *b;
-#else
-trailz(_Bigint *b)
-#endif
+trailz (_Bigint *b)
 {
 	__ULong L, *x, *xe;
 	int n = 0;
@@ -172,12 +159,8 @@ trailz(_Bigint *b)
 	return n;
 	}
 
- _Bigint *
-#ifdef KR_headers
-increment(p, b) struct _reent *p; _Bigint *b;
-#else
-increment(struct _reent *p, _Bigint *b)
-#endif
+_Bigint *
+increment (struct _reent *p, _Bigint *b)
 {
 	__ULong *x, *xe;
 	_Bigint *b1;
@@ -207,7 +190,7 @@ increment(struct _reent *p, _Bigint *b)
 #endif
 	{
 		if (b->_wds >= b->_maxwds) {
-			b1 = Balloc(p,b->_k+1);
+			b1 = eBalloc(p,b->_k+1);
 			Bcopy(b1,b);
 			Bfree(p,b);
 			b = b1;
@@ -217,12 +200,8 @@ increment(struct _reent *p, _Bigint *b)
 	return b;
 	}
 
- int
-#ifdef KR_headers
-decrement(b) _Bigint *b;
-#else
-decrement(_Bigint *b)
-#endif
+int
+decrement (_Bigint *b)
 {
 	__ULong *x, *xe;
 #ifdef Pack_16
@@ -250,12 +229,8 @@ decrement(_Bigint *b)
 	return STRTOG_Inexlo;
 	}
 
- static int
-#ifdef KR_headers
-all_on(b, n) _Bigint *b; int n;
-#else
-all_on(_Bigint *b, int n)
-#endif
+static int
+all_on (_Bigint *b, int n)
 {
 	__ULong *x, *xe;
 
@@ -269,12 +244,8 @@ all_on(_Bigint *b, int n)
 	return 1;
 	}
 
- _Bigint *
-#ifdef KR_headers
-set_ones(p, b, n) struct _reent *p; _Bigint *b; int n;
-#else
-set_ones(struct _reent *p, _Bigint *b, int n)
-#endif
+_Bigint *
+set_ones (struct _reent *p, _Bigint *b, int n)
 {
 	int k;
 	__ULong *x, *xe;
@@ -282,7 +253,7 @@ set_ones(struct _reent *p, _Bigint *b, int n)
 	k = (n + ((1 << kshift) - 1)) >> kshift;
 	if (b->_k < k) {
 		Bfree(p,b);
-		b = Balloc(p,k);
+		b = eBalloc(p,k);
 		}
 	k = n >> kshift;
 	if (n &= kmask)
@@ -297,14 +268,9 @@ set_ones(struct _reent *p, _Bigint *b, int n)
 	return b;
 	}
 
- static int
-rvOK
-#ifdef KR_headers
- (p, d, fpi, exp, bits, exact, rd, irv)
- struct _reent *p; double d; FPI *fpi; Long *exp; __ULong *bits; int exact, rd, *irv;
-#else
- (struct _reent *p, double d, FPI *fpi, Long *exp, __ULong *bits, int exact, int rd, int *irv)
-#endif
+static int
+rvOK (struct _reent *p, double d, FPI *fpi, Long *exp, __ULong *bits, int exact,
+      int rd, int *irv)
 {
 	_Bigint *b;
 	__ULong carry, inex, lostbits;
@@ -382,6 +348,9 @@ rvOK
 		if (k > nb || fpi->sudden_underflow) {
 			b->_wds = inex = 0;
 			*irv = STRTOG_Underflow | STRTOG_Inexlo;
+#ifndef NO_ERRNO
+			errno = ERANGE;
+#endif
 			}
 		else {
 			k1 = k - 1;
@@ -396,9 +365,15 @@ rvOK
 			if (carry) {
 				b = increment(p, b);
 				inex = STRTOG_Inexhi | STRTOG_Underflow;
+#ifndef NO_ERRNO
+				errno = ERANGE;
+#endif
 				}
 			else if (lostbits)
 				inex = STRTOG_Inexlo | STRTOG_Underflow;
+#ifndef NO_ERRNO
+				errno = ERANGE;
+#endif
 			}
 		}
 	else if (e > fpi->emax) {
@@ -418,12 +393,8 @@ rvOK
 	return rv;
 	}
 
- static int
-#ifdef KR_headers
-mantbits(d) double d;
-#else
-mantbits(U d)
-#endif
+static int
+mantbits (U d)
 {
 	__ULong L;
 #ifdef VAX
@@ -441,14 +412,9 @@ mantbits(U d)
 	return P - 32 - lo0bits(&L);
 	}
 
- int
-_strtodg_r
-#ifdef KR_headers
-	(p, s00, se, fpi, exp, bits)
-	struct _reent *p; const char *s00; char **se; FPI *fpi; Long *exp; __ULong *bits;
-#else
-	(struct _reent *p, const char *s00, char **se, FPI *fpi, Long *exp, __ULong *bits)
-#endif
+int
+_strtodg_l (struct _reent *p, const char *s00, char **se, FPI *fpi, Long *exp,
+	    __ULong *bits, locale_t loc)
 {
 	int abe, abits, asub;
 	int bb0, bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, decpt, denorm;
@@ -462,6 +428,8 @@ _strtodg_r
 	Long L;
 	__ULong y, z;
 	_Bigint *ab, *bb, *bb1, *bd, *bd0, *bs, *delta, *rvb, *rvb0;
+	const char *decimal_point = __get_numeric_locale(loc)->decimal_point;
+	int dec_len = strlen (decimal_point);
 
 	irv = STRTOG_Zero;
 	denorm = sign = nz0 = nz = 0;
@@ -497,7 +465,7 @@ _strtodg_r
 		switch(s[1]) {
 		  case 'x':
 		  case 'X':
-			irv = gethex(p, &s, fpi, exp, &rvb, sign);
+			irv = gethex(p, &s, fpi, exp, &rvb, sign, loc);
 			if (irv == STRTOG_NoNumber) {
 				s = s00;
 				sign = 0;
@@ -520,15 +488,14 @@ _strtodg_r
 			z = 10*z + c - '0';
 	nd0 = nd;
 #ifdef USE_LOCALE
-	if (strncmp (s, _localeconv_r (p)->decimal_point,
-		     strlen (_localeconv_r (p)->decimal_point)) == 0)
+	if (strncmp (s, decimal_point, dec_len) == 0)
 #else
 	if (c == '.')
 #endif
 		{
 		decpt = 1;
 #ifdef USE_LOCALE
-		c = *(s += strlen (_localeconv_r (p)->decimal_point));
+		c = *(s += dec_len);
 #else
 		c = *++s;
 #endif
@@ -729,13 +696,13 @@ _strtodg_r
 			dval(rv) *= tens[i];
 		if (e1 &= ~15) {
 			e1 >>= 4;
-			while(e1 >= (1 << n_bigtens-1)) {
+			while(e1 >= (1 << (n_bigtens-1))) {
 				e2 += ((word0(rv) & Exp_mask)
 					>> Exp_shift1) - Bias;
 				word0(rv) &= ~Exp_mask;
 				word0(rv) |= Bias << Exp_shift1;
 				dval(rv) *= bigtens[n_bigtens-1];
-				e1 -= 1 << n_bigtens-1;
+				e1 -= 1 << (n_bigtens-1);
 				}
 			e2 += ((word0(rv) & Exp_mask) >> Exp_shift1) - Bias;
 			word0(rv) &= ~Exp_mask;
@@ -751,13 +718,13 @@ _strtodg_r
 			dval(rv) /= tens[i];
 		if (e1 &= ~15) {
 			e1 >>= 4;
-			while(e1 >= (1 << n_bigtens-1)) {
+			while(e1 >= (1 << (n_bigtens-1))) {
 				e2 += ((word0(rv) & Exp_mask)
 					>> Exp_shift1) - Bias;
 				word0(rv) &= ~Exp_mask;
 				word0(rv) |= Bias << Exp_shift1;
 				dval(rv) *= tinytens[n_bigtens-1];
-				e1 -= 1 << n_bigtens-1;
+				e1 -= 1 << (n_bigtens-1);
 				}
 			e2 += ((word0(rv) & Exp_mask) >> Exp_shift1) - Bias;
 			word0(rv) &= ~Exp_mask;
@@ -803,6 +770,9 @@ _strtodg_r
 					rvb->_x[0] = 0;
 					*exp = emin;
 					irv = STRTOG_Underflow | STRTOG_Inexlo;
+#ifndef NO_ERRNO
+					errno = ERANGE;
+#endif
 					goto ret;
 					}
 				rvb->_x[0] = rvb->_wds = rvbits = 1;
@@ -822,9 +792,9 @@ _strtodg_r
 	bd0 = s2b(p, s0, nd0, nd, y);
 
 	for(;;) {
-		bd = Balloc(p,bd0->_k);
+		bd = eBalloc(p,bd0->_k);
 		Bcopy(bd, bd0);
-		bb = Balloc(p,rvb->_k);
+		bb = eBalloc(p,rvb->_k);
 		Bcopy(bb, rvb);
 		bbbits = rvbits - bb0;
 		bbe = rve + bb0;
@@ -953,7 +923,7 @@ _strtodg_r
 				}
 			else
 				irv = STRTOG_Normal | STRTOG_Inexhi;
-			if (bbbits < nbits && !denorm || !(rvb->_x[0] & 1))
+			if ((bbbits < nbits && !denorm) || !(rvb->_x[0] & 1))
 				break;
 			if (dsign) {
 				rvb = increment(p, rvb);
@@ -982,6 +952,9 @@ _strtodg_r
 				rvb->_wds = 0;
 				rve = emin;
 				irv = STRTOG_Underflow | STRTOG_Inexlo;
+#ifndef NO_ERRNO
+				errno = ERANGE;
+#endif
 				break;
 				}
 			adj0 = dval(adj) = 1.;
@@ -1125,12 +1098,18 @@ _strtodg_r
 		if (sudden_underflow) {
 			rvb->_wds = 0;
 			irv = STRTOG_Underflow | STRTOG_Inexlo;
+#ifndef NO_ERRNO
+			errno = ERANGE;
+#endif
 			}
 		else  {
 			irv = (irv & ~STRTOG_Retmask) |
 				(rvb->_wds > 0 ? STRTOG_Denormal : STRTOG_Zero);
 			if (irv & STRTOG_Inexact)
 				irv |= STRTOG_Underflow;
+#ifndef NO_ERRNO
+				errno = ERANGE;
+#endif
 			}
 		}
 	if (se)

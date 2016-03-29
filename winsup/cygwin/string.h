@@ -1,7 +1,5 @@
 /* string.h: Extra string defs
 
-   Copyright 2001, 2002, 2003, 2007, 2008, 2011, 2012, 2013 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -34,7 +32,7 @@ extern const char isalpha_array[];
 static inline int
 ascii_strcasematch (const char *cs, const char *ct)
 {
-  register const unsigned char *us, *ut;
+  const unsigned char *us, *ut;
 
   us = (const unsigned char *) cs;
   ut = (const unsigned char *) ct;
@@ -51,7 +49,7 @@ ascii_strcasematch (const char *cs, const char *ct)
 static inline int
 ascii_strncasematch (const char *cs, const char *ct, size_t n)
 {
-  register const unsigned char *us, *ut;
+  const unsigned char *us, *ut;
 
   if (!n)
    return 1;

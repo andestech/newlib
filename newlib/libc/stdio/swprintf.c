@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms are permitted
  * provided that the above copyright notice and this paragraph are
  * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
+ * and/or other materials related to such
  * distribution and use acknowledge that the software was developed
  * by the University of California, Berkeley.  The name of the
  * University may not be used to endorse or promote products derived
@@ -32,7 +32,7 @@ INDEX
 INDEX
 	_swprintf_r
 
-ANSI_SYNOPSIS
+SYNOPSIS
         #include <wchar.h>
 
         int wprintf(const wchar_t *<[format]>, ...);
@@ -553,11 +553,10 @@ Supporting OS subroutines required: <<close>>, <<fstat>>, <<isatty>>,
  * a variable set to _REENT.  */
 
 int
-_DEFUN(_swprintf_r, (ptr, str, size, fmt),
-       struct _reent *ptr _AND
-       wchar_t *str          _AND
-       size_t size        _AND
-       _CONST wchar_t *fmt _DOTS)
+_swprintf_r (struct _reent *ptr,
+       wchar_t *str,
+       size_t size,
+       const wchar_t *fmt, ...)
 {
   int ret;
   va_list ap;
@@ -594,10 +593,9 @@ _DEFUN(_swprintf_r, (ptr, str, size, fmt),
 #ifndef _REENT_ONLY
 
 int
-_DEFUN(swprintf, (str, size, fmt),
-       wchar_t *__restrict str   _AND
-       size_t size _AND
-       _CONST wchar_t *__restrict fmt _DOTS)
+swprintf (wchar_t *__restrict str,
+       size_t size,
+       const wchar_t *__restrict fmt, ...)
 {
   int ret;
   va_list ap;

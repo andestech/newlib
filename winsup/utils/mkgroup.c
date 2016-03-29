@@ -1,15 +1,11 @@
 /* mkgroup.c:
 
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-   2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
    This file is part of Cygwin.
 
    This software is a copyrighted work licensed under the terms of the
    Cygwin license.  Please consult the file "CYGWIN_LICENSE" for
    details. */
 
-#define _WIN32_WINNT 0x0600
 #include <errno.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -299,10 +295,12 @@ enum_local_groups (domlist_t *mach, const char *sep,
 	  else if (acc_type == SidTypeDomain)
 	    {
 	      WCHAR domname[MAX_DOMAIN_NAME_LEN + GNLEN + 2];
+	      PWCHAR p;
 
-	      wcscpy (domname, domain_name);
-	      wcscat (domname, L"\\");
-	      wcscat (domname, buffer[i].lgrpi0_name);
+	      p = wcpcpy (domname, domain_name);
+	      p = wcpcpy (p, L"\\");
+	      p = wcpncpy (p, buffer[i].lgrpi0_name, GNLEN);
+	      *p = L'\0';
 	      sid_length = SECURITY_MAX_SID_SIZE;
 	      domname_len = MAX_DOMAIN_NAME_LEN + 1;
 	      if (!LookupAccountNameW (machine, domname,
@@ -437,10 +435,12 @@ enum_groups (domlist_t *mach, const char *sep, DWORD id_offset,
 	  else if (acc_type == SidTypeDomain)
 	    {
 	      WCHAR domname[MAX_DOMAIN_NAME_LEN + GNLEN + 2];
+	      PWCHAR p;
 
-	      wcscpy (domname, machine);
-	      wcscat (domname, L"\\");
-	      wcscat (domname, buffer[i].grpi2_name);
+	      p = wcpcpy (domname, machine);
+	      p = wcpcpy (p, L"\\");
+	      p = wcpncpy (p, buffer[i].grpi2_name, GNLEN);
+	      *p = L'\0';
 	      sid_length = SECURITY_MAX_SID_SIZE;
 	      domname_len = MAX_DOMAIN_NAME_LEN + 1;
 	      if (!LookupAccountNameW (machine, domname, psid, &sid_length,
@@ -470,7 +470,7 @@ enum_groups (domlist_t *mach, const char *sep, DWORD id_offset,
   while (rc == ERROR_MORE_DATA);
 }
 
-static int
+static int __attribute__ ((__noreturn__))
 usage (FILE * stream)
 {
   fprintf (stream,
@@ -509,7 +509,7 @@ usage (FILE * stream)
 "groups on domain controllers and domain member machines.\n"
 "\n", program_invocation_short_name,
       (const char *) cygwin_internal (CW_GETNSSSEP));
-  return 1;
+  exit (0);
 }
 
 struct option longopts[] = {
@@ -538,7 +538,7 @@ print_version ()
 {
   printf ("mkgroup (cygwin) %d.%d.%d\n"
 	  "Group File Generator\n"
-	  "Copyright (C) 1997 - %s Red Hat, Inc.\n"
+	  "Copyright (C) 1997 - %s Cygwin Authors\n"
 	  "This is free software; see the source for copying conditions.  There is NO\n"
 	  "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n",
 	  CYGWIN_VERSION_DLL_MAJOR / 1000,
@@ -702,7 +702,6 @@ main (int argc, char **argv)
 	break;
       case 'h':
 	usage (stdout);
-	return 0;
       case 'V':
 	print_version ();
 	return 0;
