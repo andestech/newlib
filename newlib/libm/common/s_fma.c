@@ -6,7 +6,7 @@ INDEX
 INDEX
 	fmaf
 
-ANSI_SYNOPSIS
+SYNOPSIS
 	#include <math.h>
 	double fma(double <[x]>, double <[y]>, double <[z]>);
 	float fmaf(float <[x]>, float <[y]>, float <[z]>);
@@ -38,6 +38,8 @@ ANSI C, POSIX.
 
 #include "fdlibm.h"
 
+#if !HAVE_FAST_FMA
+
 #ifndef _DOUBLE_IS_32BITS
 
 #ifdef __STDC__
@@ -54,3 +56,5 @@ ANSI C, POSIX.
 }
 
 #endif /* _DOUBLE_IS_32BITS */
+
+#endif /* !HAVE_FAST_FMA */

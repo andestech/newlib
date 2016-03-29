@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms are permitted
  * provided that the above copyright notice and this paragraph are
  * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
+ * and/or other materials related to such
  * distribution and use acknowledge that the software was developed
  * by the University of California, Berkeley.  The name of the
  * University may not be used to endorse or promote products derived
@@ -24,25 +24,12 @@ INDEX
 INDEX
 	_freopen_r
 
-ANSI_SYNOPSIS
+SYNOPSIS
 	#include <stdio.h>
 	FILE *freopen(const char *restrict <[file]>, const char *restrict <[mode]>,
 		      FILE *restrict <[fp]>);
 	FILE *_freopen_r(struct _reent *<[ptr]>, const char *restrict <[file]>,
 		      const char *restrict <[mode]>, FILE *restrict <[fp]>);
-
-TRAD_SYNOPSIS
-	#include <stdio.h>
-	FILE *freopen(<[file]>, <[mode]>, <[fp]>)
-	char *<[file]>;
-	char *<[mode]>;
-	FILE *<[fp]>;
-
-	FILE *_freopen_r(<[ptr]>, <[file]>, <[mode]>, <[fp]>)
-	struct _reent *<[ptr]>;
-	char *<[file]>;
-	char *<[mode]>;
-	FILE *<[fp]>;
 
 DESCRIPTION
 Use this variant of <<fopen>> if you wish to specify a particular file
@@ -88,10 +75,9 @@ Supporting OS subroutines required: <<close>>, <<fstat>>, <<isatty>>,
  */
 
 FILE *
-_DEFUN(_freopen_r, (ptr, file, mode, fp),
-       struct _reent *ptr _AND
-       const char *__restrict file _AND
-       const char *__restrict mode _AND
+_freopen_r (struct _reent *ptr,
+       const char *__restrict file,
+       const char *__restrict mode,
        register FILE *__restrict fp)
 {
   register int f;
@@ -234,7 +220,7 @@ _DEFUN(_freopen_r, (ptr, file, mode, fp),
 
   fp->_flags = flags;
   fp->_file = f;
-  fp->_cookie = (_PTR) fp;
+  fp->_cookie = (void *) fp;
   fp->_read = __sread;
   fp->_write = __swrite;
   fp->_seek = __sseek;
@@ -256,9 +242,8 @@ _DEFUN(_freopen_r, (ptr, file, mode, fp),
 #ifndef _REENT_ONLY
 
 FILE *
-_DEFUN(freopen, (file, mode, fp),
-       _CONST char *__restrict file _AND
-       _CONST char *__restrict mode _AND
+freopen (const char *__restrict file,
+       const char *__restrict mode,
        register FILE *__restrict fp)
 {
   return _freopen_r (_REENT, file, mode, fp);

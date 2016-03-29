@@ -1,8 +1,5 @@
 /* poll.cc. Implements poll(2) via usage of select(2) call.
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2011,
-   2012, 2014, 2015 Red Hat, Inc.
-
    This file is part of Cygwin.
 
    This software is a copyrighted work licensed under the terms of the
@@ -97,12 +94,12 @@ poll (struct pollfd *fds, nfds_t nfds, int timeout)
     {
       if (fds[i].fd >= 0 && fds[i].revents != POLLNVAL)
 	{
-	  fhandler_socket *sock;
+	  fhandler_socket_wsock *sock;
 
 	  /* Check if the descriptor has been closed, or if shutdown for the
 	     read side has been called on a socket. */
 	  if (cygheap->fdtab.not_open (fds[i].fd)
-	      || ((sock = cygheap->fdtab[fds[i].fd]->is_socket ())
+	      || ((sock = cygheap->fdtab[fds[i].fd]->is_wsock_socket ())
 		  && sock->saw_shutdown_read ()))
 	    fds[i].revents = POLLHUP;
 	  else
@@ -120,7 +117,7 @@ poll (struct pollfd *fds, nfds_t nfds, int timeout)
 	      /* Handle failed connect.  A failed connect implicitly sets
 	         POLLOUT, if requested, but it doesn't set POLLIN. */
 	      if ((fds[i].events & POLLIN)
-		  && (sock = cygheap->fdtab[fds[i].fd]->is_socket ())
+		  && (sock = cygheap->fdtab[fds[i].fd]->is_wsock_socket ())
 		  && sock->connect_state () == connect_failed)
 		fds[i].revents |= (POLLIN | POLLERR);
 	      else

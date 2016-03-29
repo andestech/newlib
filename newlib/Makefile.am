@@ -1,7 +1,11 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus dejagnu
+AUTOMAKE_OPTIONS = dejagnu subdir-objects
 ACLOCAL_AMFLAGS = -I . -I ..
+
+# Variables that will accumulate in subdirs.
+PHONY =
+noinst_DATA =
 
 # Multilib support variables.
 MULTISRCTOP =
@@ -63,19 +67,15 @@ AM_MAKEFLAGS = \
 
 FLAGS_TO_PASS=$(AM_MAKEFLAGS)
 
-if HAVE_DOC
-DOCDIR = doc
-else
-DOCDIR =
-endif
-
 SUBDIRS = libc libm \
-	$(DOCDIR) . $(EXTRA_DIRS)
+	. $(EXTRA_DIRS)
 
 tooldir = $(exec_prefix)/$(host_alias)
 toollibdir = $(tooldir)/lib$(MULTISUBDIR)
 
 AR_FLAGS = rc
+
+noinst_DATA += stmp-targ-include
 
 if USE_LIBTOOL
 toollib_LTLIBRARIES = libm.la \
@@ -83,12 +83,16 @@ toollib_LTLIBRARIES = libm.la \
 else
 toollib_LIBRARIES = libm.a \
 	libc.a
+if HAVE_MULTISUBDIR
+BUILD_MULTISUBDIR = $(builddir)$(MULTISUBDIR)
+if HAVE_CRT0
+noinst_DATA += $(BUILD_MULTISUBDIR)/$(CRT0)
+endif
+noinst_DATA += $(BUILD_MULTISUBDIR)/libc.a $(BUILD_MULTISUBDIR)/libm.a
+endif
 endif
 
-noinst_DATA = stmp-targ-include
-
 toollib_DATA = $(CRT0) $(CRT1)
-
 
 # The functions ldexp, frexp and modf are traditionally supplied in
 # both libc.a and libm.a.  We build them in libm.a and copy them over,
@@ -101,13 +105,12 @@ MATHOBJS_IN_LIBC = \
 	$(lpfx)s_isnand.$(oext) $(lpfx)sf_isnanf.$(oext) \
 	$(lpfx)s_nan.$(oext) $(lpfx)sf_nan.$(oext) \
 	$(lpfx)s_ldexp.$(oext) $(lpfx)sf_ldexp.$(oext) \
-	$(lpfx)s_frexp.$(oext) $(lpfx)sf_frexp.$(oext) \
+	$(lpfx)s_frexp.$(oext) $(lpfx)sf_frexp.$(oext) $(lpfx)frexpl.$(oext) \
 	$(lpfx)s_modf.$(oext) \
 	$(lpfx)sf_modf.$(oext) $(lpfx)s_scalbn.$(oext) \
 	$(lpfx)sf_scalbn.$(oext) \
 	$(lpfx)s_finite.$(oext) $(lpfx)sf_finite.$(oext) \
-	$(lpfx)s_copysign.$(oext) $(lpfx)sf_copysign.$(oext) \
-	$(lpfx)s_infconst.$(oext)
+	$(lpfx)s_copysign.$(oext) $(lpfx)sf_copysign.$(oext)
 
 LIBC_OBJECTLISTS = \
 	$(POSIX_OBJECTLIST) \
@@ -171,23 +174,40 @@ libc/libc.a: ; @true
 
 libm.a: libm/libm.a
 	rm -f $@
-	ln libm/libm.a $@ >/dev/null 2>/dev/null || cp libm/libm.a $@
+	ln $< $@ >/dev/null 2>/dev/null || cp $< $@
 
 libm/libm.a: ; @true
 
 endif # USE_LIBTOOL
 
+if HAVE_MULTISUBDIR
+$(BUILD_MULTISUBDIR):
+	$(MKDIR_P) $@
+
+$(BUILD_MULTISUBDIR)/crt0.o: $(CRT0_DIR)$(CRT0) $(BUILD_MULTISUBDIR)
+	rm -f $@
+	ln $< $@ >/dev/null 2>/dev/null || cp $< $@
+
+$(BUILD_MULTISUBDIR)/libc.a: libc.a $(BUILD_MULTISUBDIR)
+	rm -f $@ $(BUILD_MULTISUBDIR)/libg.a
+	ln $< $@ >/dev/null 2>/dev/null || cp $< $@
+	ln libg.a $(BUILD_MULTISUBDIR)/libg.a >/dev/null 2>/dev/null || \
+	cp libg.a $(BUILD_MULTISUBDIR)/libg.a
+
+$(BUILD_MULTISUBDIR)/libm.a: libm.a $(BUILD_MULTISUBDIR)
+	rm -f $@
+	ln $< $@ >/dev/null 2>/dev/null || cp $< $@
+endif
+
 crt0.o: $(CRT0_DIR)$(CRT0)
 	rm -f $@
-	ln $(CRT0_DIR)$(CRT0) $@ >/dev/null 2>/dev/null \
-	 || cp $(CRT0_DIR)$(CRT0) $@
+	ln $< $@ >/dev/null 2>/dev/null || cp $< $@
 
 $(CRT0_DIR)$(CRT0): ; @true
 
 crt1.o: $(CRT1_DIR)$(CRT1)
 	rm -f $@
-	ln $< $@ >/dev/null 2>/dev/null \
-	 || cp $< $@
+	ln $< $@ >/dev/null 2>/dev/null || cp $< $@
 
 $(CRT1_DIR)$(CRT1): ; @true
 
@@ -215,6 +235,23 @@ stmp-targ-include: config.status
 	$(MAKE) targ-include/sys \
 		targ-include/machine \
 		targ-include/bits
+	-if [ -n "$(shared_machine_dir)" ]; then \
+	    for i in $(srcdir)/libc/machine/$(shared_machine_dir)/machine/*.h; do \
+		if [ -f $$i ]; then \
+		  cp $$i targ-include/machine/`basename $$i`; \
+		else true; fi ; \
+	      done; \
+	    for i in $(srcdir)/libc/machine/$(shared_machine_dir)/sys/*.h; do \
+		if [ -f $$i ]; then \
+		  cp $$i targ-include/sys/`basename $$i`; \
+		else true; fi ; \
+	      done; \
+	    for i in $(srcdir)/libc/machine/$(shared_machine_dir)/include/*.h; do \
+		if [ -f $$i ]; then \
+		  cp $$i targ-include/`basename $$i`; \
+		else true; fi ; \
+	      done; \
+	  fi
 	-for i in $(srcdir)/libc/machine/$(machine_dir)/machine/*.h; do \
 	    if [ -f $$i ]; then \
 	      cp $$i targ-include/machine/`basename $$i`; \
@@ -293,6 +330,13 @@ endif
 	  for i in $(srcdir)/libc/include/machine/*.h; do \
 	   $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/machine/`basename $$i`; \
 	  done; \
+	  if [ -n "$(shared_machine_dir)" ]; then \
+	    for i in $(srcdir)/libc/machine/$(shared_machine_dir)/machine/*.h; do \
+	      if [ -f $$i ]; then \
+	       $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/machine/`basename $$i`; \
+	      else true; fi ; \
+	    done; \
+	  fi ; \
 	  for i in $(srcdir)/libc/machine/$(machine_dir)/machine/*.h; do \
 	    if [ -f $$i ]; then \
 	     $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/machine/`basename $$i`; \
@@ -302,10 +346,26 @@ endif
 	  for i in $(srcdir)/libc/include/rpc/*.h; do \
 	   $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/rpc/`basename $$i`; \
 	  done; \
+	  $(mkinstalldirs) $(DESTDIR)$(tooldir)/include/ssp; \
+	  for i in $(srcdir)/libc/include/ssp/*.h; do \
+	   $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/ssp/`basename $$i`; \
+	  done; \
 	  $(mkinstalldirs) $(DESTDIR)$(tooldir)/include/sys; \
 	  for i in $(srcdir)/libc/include/sys/*.h; do \
 	   $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/sys/`basename $$i`; \
 	  done; \
+	  if [ -n "$(shared_machine_dir)" ]; then \
+	    for i in $(srcdir)/libc/machine/$(shared_machine_dir)/sys/*.h; do \
+	      if [ -f $$i ]; then \
+	       $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/sys/`basename $$i`; \
+	      else true; fi ; \
+	    done ; \
+	    for i in $(srcdir)/libc/machine/$(shared_machine_dir)/include/*.h; do \
+	      if [ -f $$i ]; then \
+	       $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/`basename $$i`; \
+	      else true; fi ; \
+	    done ; \
+	  fi ; \
 	  for i in $(srcdir)/libc/machine/$(machine_dir)/sys/*.h; do \
 	    if [ -f $$i ]; then \
 	     $(INSTALL_DATA) $$i $(DESTDIR)$(tooldir)/include/sys/`basename $$i`; \
@@ -356,16 +416,34 @@ endif
 	  done ; \
 	else true; fi
 
+# Generate Unicode data tables for libc/string/wcwidth and libc/ctype/??w*
+unidata:
+	cd $(srcdir)/libc/string; ./mkunidata -u
+	cd $(srcdir)/libc/ctype; ./mkunidata -u
+
 # Force makedoc to be built before building info files.
-info-recursive: doc/makedoc
-dvi-recursive: doc/makedoc
-doc/makedoc:
-	cd doc && $(MAKE) all
+info-recursive dvi-recursive: doc/makedoc$(EXEEXT_FOR_BUILD)
+
+# Recursive targets for man and install-man
+man:
+	$(MAKE) man-cache || exit 1; \
+	for d in $(SUBDIRS); do \
+	  if test "$$d" != "."; then \
+	    (cd $$d && $(MAKE) man) || exit 1; \
+	  fi; \
+	done
+
+install-man:
+	for d in $(SUBDIRS); do \
+	  if test "$$d" != "."; then \
+	    (cd $$d && $(MAKE) install-man) || exit 1; \
+	  fi; \
+	done
 
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host
 
 # Multilib support.
-.PHONY: all-multi check-multi mostlyclean-multi clean-multi distclean-multi \
+PHONY += all-multi check-multi mostlyclean-multi clean-multi distclean-multi \
 	maintainer-clean-multi
 
 all-recursive: all-multi
@@ -457,3 +535,9 @@ check-DEJAGNU: site.exp
 
 clean-local:
 	-rm -rf targ-include newlib.h _newlib_version.h stamp-*
+
+if HAVE_DOC
+include doc/local.mk
+endif
+
+.PHONY: $(PHONY)

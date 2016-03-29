@@ -60,7 +60,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../../libtool.m4 \
 	$(top_srcdir)/../../ltsugar.m4 \
 	$(top_srcdir)/../../ltversion.m4 \
 	$(top_srcdir)/../../lt~obsolete.m4 \
-	$(top_srcdir)/../acinclude.m4 $(top_srcdir)/configure.in
+	$(top_srcdir)/../acinclude.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(SHELL) $(top_srcdir)/../../mkinstalldirs
@@ -68,6 +68,12 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 depcomp =
 am__depfiles_maybe =
+AM_V_GEN = $(am__v_GEN_@AM_V@)
+am__v_GEN_ = $(am__v_GEN_@AM_DEFAULT_V@)
+am__v_GEN_0 = @echo "  GEN   " $@;
+AM_V_at = $(am__v_at_@AM_V@)
+am__v_at_ = $(am__v_at_@AM_DEFAULT_V@)
+am__v_at_0 = @
 SOURCES =
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -105,6 +111,7 @@ am__installdirs = "$(DESTDIR)$(cctdir)"
 DATA = $(cct_DATA)
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
+AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AR = @AR@
 AS = @AS@
 AUTOCONF = @AUTOCONF@
@@ -238,6 +245,7 @@ prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
 sbindir = @sbindir@
+shared_machine_dir = @shared_machine_dir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
 subdirs = @subdirs@
@@ -247,7 +255,6 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AUTOMAKE_OPTIONS = cygnus
 cctdir = $(datadir)/iconv_data
 cct_DATA = \
 iso_8859_10.cct iso_8859_13.cct iso_8859_14.cct iso_8859_15.cct \
@@ -268,13 +275,16 @@ cns11643_plane1.cct cns11643_plane2.cct cns11643_plane14.cct
 #
 # documentation rules
 #
-SUFFIXES = .def
+SUFFIXES = .def .xml
 CHEW = ${top_builddir}/../doc/makedoc -f $(top_srcdir)/../doc/doc.str
-CLEANFILES = $(CHEWOUT_FILES) *.ref
+DOCBOOK_CHEW = ${top_srcdir}/../doc/makedocbook.py
+DOCBOOK_OUT_FILES = $(CHEWOUT_FILES:.def=.xml)
+DOCBOOK_CHAPTERS = $(CHAPTERS:.tex=.xml)
+CLEANFILES = $(CHEWOUT_FILES) $(DOCBOOK_OUT_FILES)
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .def .c
+.SUFFIXES: .def .xml .c
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/../../../../Makefile.shared $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -284,9 +294,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/..
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --cygnus iconv/ccs/binary/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign --ignore-deps iconv/ccs/binary/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --cygnus iconv/ccs/binary/Makefile
+	  $(AUTOMAKE) --foreign --ignore-deps iconv/ccs/binary/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -339,7 +349,7 @@ TAGS:
 ctags: CTAGS
 CTAGS:
 
-check-am:
+check-am: all-am
 check: check-am
 all-am: Makefile $(DATA)
 installdirs:
@@ -463,8 +473,8 @@ objectlist.awk.in: $(noinst_LTLIBRARIES)
 	done
 
 .c.def:
-	$(CHEW) < $< > $*.def 2> $*.ref
-	touch stmp-def
+	$(CHEW) < $< > $*.def || ( rm $*.def && false )
+	@touch stmp-def
 
 TARGETDOC ?= ../tmp.texi
 
@@ -472,6 +482,16 @@ doc: $(CHEWOUT_FILES)
 	for chapter in $(CHAPTERS) ; \
 	do \
 	  cat $(srcdir)/$$chapter >> $(TARGETDOC) ; \
+	done
+
+.c.xml:
+	$(DOCBOOK_CHEW) < $< > $*.xml || ( rm $*.xml && false )
+	@touch stmp-xml
+
+docbook: $(DOCBOOK_OUT_FILES)
+	for chapter in $(DOCBOOK_CHAPTERS) ; \
+	do \
+	  ${top_srcdir}/../doc/chapter-texi2docbook.py <$(srcdir)/$${chapter%.xml}.tex >../$$chapter ; \
 	done
 
 info:

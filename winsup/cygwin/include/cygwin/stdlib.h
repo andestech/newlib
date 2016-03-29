@@ -1,7 +1,5 @@
 /* stdlib.h
 
-   Copyright 2005, 2006, 2007, 2008, 2009, 2011, 2013 Red Hat Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -28,6 +26,9 @@ char *canonicalize_file_name (const char *);
 #if __BSD_VISIBLE || __POSIX_VISIBLE >= 200112
 int unsetenv (const char *);
 #endif
+#if __MISC_VISIBLE
+int clearenv (void);
+#endif
 #if __XSI_VISIBLE
 char *ptsname (int);
 int grantpt (int);
@@ -42,14 +43,14 @@ int getpt (void);
 int posix_openpt (int);
 #endif
 
-#ifdef _COMPILING_NEWLIB
+#ifdef _LIBC
 #define unsetenv UNUSED_unsetenv
 #define _unsetenv_r UNUSED__unsetenv_r
 #endif
 
-extern _PTR memalign _PARAMS ((size_t, size_t));
+extern void *memalign (size_t, size_t);
 #if __BSD_VISIBLE || (__XSI_VISIBLE >= 4 && __POSIX_VISIBLE < 200112)
-extern _PTR valloc _PARAMS ((size_t));
+extern void *valloc (size_t);
 #endif
 
 #undef _malloc_r
@@ -78,6 +79,10 @@ extern _PTR valloc _PARAMS ((size_t));
 #define _malloc_trim_r(r, s) malloc_trim (s)
 #undef _mstats_r
 #define _mstats_r(r, p) mstats (p)
+
+#if __BSD_VISIBLE
+int getloadavg(double loadavg[], int nelem);
+#endif
 
 #ifdef __cplusplus
 }

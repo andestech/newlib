@@ -99,7 +99,8 @@ _rs_stir(void)
 	rs->rs_have = 0;
 	memset(rsx->rs_buf, 0, sizeof(rsx->rs_buf));
 
-	rs->rs_count = 1600000;
+	rs->rs_count = (SIZE_MAX <= 65535) ? 65000
+	  : (SIZE_MAX <= 1048575 ? 1048000 : 1600000);
 }
 
 static inline void
@@ -180,16 +181,24 @@ arc4random(void)
 {
 	uint32_t val;
 
+#ifndef __SINGLE_THREAD__
 	_ARC4_LOCK();
+#endif
 	_rs_random_u32(&val);
+#ifndef __SINGLE_THREAD__
 	_ARC4_UNLOCK();
+#endif
 	return val;
 }
 
 void
 arc4random_buf(void *buf, size_t n)
 {
+#ifndef __SINGLE_THREAD__
 	_ARC4_LOCK();
+#endif
 	_rs_random_buf(buf, n);
+#ifndef __SINGLE_THREAD__
 	_ARC4_UNLOCK();
+#endif
 }

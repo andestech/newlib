@@ -1,6 +1,4 @@
 ## Process this file with automake to generate Makefile.in
-AUTOMAKE_OPTIONS = cygnus
-
 SUBDIRS = ces ccs lib .
 
 cctdir=$(datadir)/iconv_data
@@ -17,6 +15,9 @@ CHAPTERS = iconv.tex
 
 iconv.def: lib/iconv.def
 	cp lib/iconv.def iconv.def
+
+iconv.xml: lib/iconv.xml
+	cp lib/iconv.xml iconv.xml
 
 stmp-def: force
 	(cd lib && $(MAKE) doc)

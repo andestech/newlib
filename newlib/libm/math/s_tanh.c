@@ -21,19 +21,10 @@ tanh
 INDEX
 tanhf
 
-ANSI_SYNOPSIS
+SYNOPSIS
         #include <math.h>
         double tanh(double <[x]>);
         float tanhf(float <[x]>);
-
-TRAD_SYNOPSIS
-        #include <math.h>
-        double tanh(<[x]>)
-        double <[x]>;
-
-        float tanhf(<[x]>)
-        float <[x]>;
-
 
 DESCRIPTION
 
@@ -82,9 +73,9 @@ PORTABILITY
 #ifndef _DOUBLE_IS_32BITS
 
 #ifdef __STDC__
-static const double one=1.0, two=2.0, tiny = 1.0e-300;
+static const volatile double one=1.0, two=2.0, tiny = 1.0e-300;
 #else
-static double one=1.0, two=2.0, tiny = 1.0e-300;
+static double volatile one=1.0, two=2.0, tiny = 1.0e-300;
 #endif
 
 #ifdef __STDC__

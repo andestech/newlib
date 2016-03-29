@@ -1,7 +1,5 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus
-
 INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 
 AM_CCASFLAGS = $(INCLUDES)
@@ -19,6 +17,8 @@ lib_a_SOURCES += memmove-stub.c
 lib_a_SOURCES += memmove.S
 lib_a_SOURCES += memset-stub.c
 lib_a_SOURCES += memset.S
+lib_a_SOURCES += rawmemchr.S
+lib_a_SOURCES += rawmemchr-stub.c
 lib_a_SOURCES += setjmp.S
 lib_a_SOURCES += stpcpy-stub.c
 lib_a_SOURCES += stpcpy.S

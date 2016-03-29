@@ -1,8 +1,5 @@
 /* globals.cc - Define global variables here.
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -26,10 +23,12 @@ HMODULE NO_COPY hntdll;
 int NO_COPY sigExeced;
 WCHAR windows_system_directory[MAX_PATH];
 UINT windows_system_directory_length;
-#ifndef __x86_64__
 WCHAR system_wow64_directory[MAX_PATH];
 UINT system_wow64_directory_length;
-#endif /* !__x86_64__ */
+WCHAR windows_directory_buf[MAX_PATH];
+PWCHAR windows_directory = windows_directory_buf + 4;
+UINT windows_directory_length;
+UNICODE_STRING windows_directory_path;
 WCHAR global_progname[NT_MAX_PATH];
 
 /* program exit the program */
@@ -54,11 +53,12 @@ enum exit_states
    "winsymlinks" setting of the CYGWIN environment variable. */
 enum winsym_t
 {
-  WSYM_sysfile = 0,
+  WSYM_default = 0,
   WSYM_lnk,
   WSYM_native,
   WSYM_nativestrict,
-  WSYM_nfs
+  WSYM_nfs,
+  WSYM_sysfile,
 };
 
 exit_states NO_COPY exit_state;
@@ -68,13 +68,12 @@ int NO_COPY dynamically_loaded;
 
 /* Some CYGWIN environment variable variables. */
 bool allow_glob = true;
-bool detect_bloda;
-bool dos_file_warning;
 bool ignore_case_with_glob;
-bool pipe_byte;
+bool pipe_byte = true; /* Default to byte mode so that C# programs work. */
 bool reset_com;
 bool wincmdln;
-winsym_t allow_winsymlinks = WSYM_sysfile;
+winsym_t allow_winsymlinks = WSYM_default;
+bool disable_pcon;
 
 bool NO_COPY in_forkee;
 
@@ -88,9 +87,6 @@ int NO_COPY __isthreaded = 0;
 int __argc_safe;
 int __argc;
 char **__argv;
-#ifdef NEWVFORK
-vfork_save NO_COPY *main_vfork;
-#endif
 
 _cygtls NO_COPY *_main_tls /* !globals.h */;
 
@@ -137,6 +133,7 @@ const int __collate_load_error = 0;
   extern UNICODE_STRING _RDATA ro_u_mtx = _ROU (L"mtx");
   extern UNICODE_STRING _RDATA ro_u_csc = _ROU (L"CSC-CACHE");
   extern UNICODE_STRING _RDATA ro_u_fat = _ROU (L"FAT");
+  extern UNICODE_STRING _RDATA ro_u_exfat = _ROU (L"exFAT");
   extern UNICODE_STRING _RDATA ro_u_mvfs = _ROU (L"MVFS");
   extern UNICODE_STRING _RDATA ro_u_nfs = _ROU (L"NFS");
   extern UNICODE_STRING _RDATA ro_u_ntfs = _ROU (L"NTFS");
@@ -144,7 +141,6 @@ const int __collate_load_error = 0;
      in the reply from the filesystem. */
   extern UNICODE_STRING _RDATA ro_u_prlfs = _ROU (L"PrlSF\0");
   extern UNICODE_STRING _RDATA ro_u_refs = _ROU (L"ReFS");
-  extern UNICODE_STRING _RDATA ro_u_sunwnfs = _ROU (L"SUNWNFS");
   extern UNICODE_STRING _RDATA ro_u_udf = _ROU (L"UDF");
   extern UNICODE_STRING _RDATA ro_u_unixfs = _ROU (L"UNIXFS");
   extern UNICODE_STRING _RDATA ro_u_nwfs = _ROU (L"NWFS");
@@ -157,12 +153,14 @@ const int __collate_load_error = 0;
   extern UNICODE_STRING _RDATA ro_u_natdir = _ROU (L"Directory");
   extern UNICODE_STRING _RDATA ro_u_natsyml = _ROU (L"SymbolicLink");
   extern UNICODE_STRING _RDATA ro_u_natdev = _ROU (L"Device");
+  extern UNICODE_STRING _RDATA ro_u_npfs = _ROU (L"\\Device\\NamedPipe\\");
+  extern UNICODE_STRING _RDATA ro_u_mq_suffix = _ROU (L":mqueue");
   #undef _ROU
 
   /* This is an exported copy of environ which can be used by DLLs
      which use cygwin.dll.  */
   char **__cygwin_environ;
-#ifndef __x86_64__
+#ifdef __i386__
   char ***main_environ = &__cygwin_environ;
 #endif
   /* __progname used in getopt error message */
@@ -175,7 +173,7 @@ const int __collate_load_error = 0;
    /* dll_major */ CYGWIN_VERSION_DLL_MAJOR,
    /* dll_major */ CYGWIN_VERSION_DLL_MINOR,
    /* impure_ptr_ptr */ NULL,
-#ifndef __x86_64__
+#ifdef __i386__
    /* envptr */ NULL,
 #endif
    /* malloc */ malloc, /* free */ free,

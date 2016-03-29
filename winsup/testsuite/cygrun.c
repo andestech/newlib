@@ -1,7 +1,5 @@
 /* cygrun.c: testsuite support program
 
-   Copyright 1999, 2000, 2001, 2002 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -27,9 +25,12 @@ main (int argc, char **argv)
 
   if (argc < 2)
     {
-      fprintf (stderr, "Usage: cygrun [program]\n");
+      fprintf (stderr, "Usage: cygrun [program] [tmpdir]\n");
       exit (0);
     }
+
+  if (argc >= 3)
+    SetEnvironmentVariable ("TDIRECTORY", argv[2]);
 
   SetEnvironmentVariable ("CYGWIN_TESTING", "1");
   if ((p = getenv ("CYGWIN")) == NULL || (strstr (p, "ntsec") == NULL))

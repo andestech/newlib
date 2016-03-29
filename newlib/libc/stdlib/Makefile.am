@@ -1,7 +1,5 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus
-
 INCLUDES = $(NEWLIB_CFLAGS) $(CROSS_CFLAGS) $(TARGET_CFLAGS)
 
 GENERAL_SOURCES = \
@@ -32,10 +30,16 @@ GENERAL_SOURCES = \
 	gdtoa-hexnan.c	\
 	getenv.c  	\
 	getenv_r.c	\
+	imaxabs.c	\
+	imaxdiv.c	\
 	itoa.c          \
 	labs.c 		\
 	ldiv.c  	\
 	ldtoa.c		\
+	gdtoa-ldtoa.c	\
+	gdtoa-gdtoa.c	\
+	gdtoa-dmisc.c	\
+	gdtoa-gmisc.c	\
 	malloc.c  	\
 	mblen.c		\
 	mblen_r.c	\
@@ -52,17 +56,20 @@ GENERAL_SOURCES = \
 	rand_r.c	\
 	random.c	\
 	realloc.c	\
+	reallocarray.c	\
 	reallocf.c	\
 	sb_charsets.c	\
 	strtod.c	\
-	strtodg.c	\
+	strtoimax.c	\
 	strtol.c	\
-	strtorx.c	\
 	strtoul.c	\
+	strtoumax.c	\
 	utoa.c          \
 	wcstod.c	\
+	wcstoimax.c	\
 	wcstol.c	\
 	wcstoul.c	\
+	wcstoumax.c	\
 	wcstombs.c	\
 	wcstombs_r.c	\
 	wctomb.c	\
@@ -70,7 +77,9 @@ GENERAL_SOURCES = \
 
 if HAVE_LONG_DOUBLE
 GENERAL_SOURCES += \
-	strtold.c \
+	strtodg.c	\
+	strtold.c	\
+	strtorx.c	\
 	wcstold.c
 endif # HAVE_LONG_DOUBLE
 
@@ -304,11 +313,13 @@ CHEWOUT_FILES= \
 CHAPTERS = stdlib.tex
 
 $(lpfx)dtoa.$(oext): dtoa.c mprec.h
-$(lpfx)ldtoa.$(oext): ldtoa.c mprec.h
+$(lpfx)ldtoa.$(oext): ldtoa.c mprec.h gdtoa.h
+$(lpfx)gdtoa-ldtoa.$(oext): gdtoa-ldtoa.c mprec.h gdtoaimp.h gdtoa.h
+$(lpfx)gdtoa-gdtoa.$(oext): gdtoa-gdtoa.c mprec.h gdtoaimp.h gdtoa.h
+$(lpfx)gdtoa-dmisc.$(oext): gdtoa-dmisc.c mprec.h gdtoaimp.h gdtoa.h
+$(lpfx)gdtoa-gmisc.$(oext): gdtoa-gmisc.c mprec.h gdtoaimp.h gdtoa.h
 $(lpfx)ecvtbuf.$(oext): ecvtbuf.c mprec.h
 $(lpfx)mbtowc_r.$(oext): mbtowc_r.c mbctype.h
-	$(LIB_COMPILE) -c -fshort-enums $(srcdir)/mbtowc_r.c -o $@
-
 $(lpfx)mprec.$(oext): mprec.c mprec.h
 $(lpfx)strtod.$(oext): strtod.c mprec.h
 $(lpfx)gdtoa-gethex.$(oext): gdtoa-gethex.c mprec.h

@@ -10,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -63,7 +59,7 @@ struct ip {
 		     ip_hl:4;		/* header length */
 #endif
 #endif /* not _IP_VHL */
-	u_int_8   ip_tos;		/* type of service */
+	u_int8_t   ip_tos;		/* type of service */
 	u_int16_t ip_len;		/* total length */
 	u_int16_t ip_id;		/* identification */
 	u_int16_t ip_off;		/* fragment offset field */

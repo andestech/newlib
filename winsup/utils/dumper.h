@@ -1,7 +1,5 @@
 /* dumper.h
 
-   Copyright 1999, 2001, 2013 Red Hat Inc.
-
    Written by Egor Duda <deo@logos-m.ru>
 
    This file is part of Cygwin.
@@ -64,22 +62,6 @@ typedef struct _process_entity
   struct _process_entity* next;
 } process_entity;
 
-class exclusion
-{
-public:
-  size_t last;
-  size_t size;
-  size_t step;
-  process_mem_region* region;
-
-  exclusion ( size_t step ) { last = size = 0;
-			      this->step = step;
-			      region = NULL; }
-  ~exclusion () { free ( region ); }
-  int add ( LPBYTE mem_base, SIZE_T mem_size );
-  int sort_and_check ();
-};
-
 #define PAGE_BUFFER_SIZE 4096
 
 class dumper
@@ -89,7 +71,6 @@ class dumper
   HANDLE hProcess;
   process_entity* list;
   process_entity* last;
-  exclusion* excl_list;
 
   char* file_name;
   bfd* core_bfd;
@@ -134,8 +115,6 @@ public:
 extern int deb_printf ( const char* format, ... );
 
 extern char* psapi_get_module_name ( HANDLE hProcess, LPVOID BaseAddress );
-
-extern int parse_pe ( const char* file_name, exclusion* excl_list );
 
 extern BOOL verbose;
 

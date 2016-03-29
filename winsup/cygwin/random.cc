@@ -27,6 +27,8 @@
  * SUCH DAMAGE.
  */
 
+#define __INSIDE_CYGWIN__
+
 extern "C" {
 #if defined(LIBC_SCCS) && !defined(lint)
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
@@ -277,14 +279,6 @@ srandom(unsigned x)
 		(void)random();
 }
 
-/* Avoid a compiler warning when we really want to get at the junk in
-   an uninitialized variable. */
-static unsigned long
-dummy (unsigned volatile long *x)
-{
-  return *x;
-}
-
 /*
  * srandomdev:
  *
@@ -311,7 +305,11 @@ srandomdev()
 		unsigned long junk;
 
 		gettimeofday(&tv, NULL);
-		srandom((getpid() << 16) ^ tv.tv_sec ^ tv.tv_usec ^ dummy(&junk));
+		/* Avoid a compiler warning when we really want to get at the
+		   junk in an uninitialized variable. */
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+		srandom((getpid() << 16) ^ tv.tv_sec ^ tv.tv_usec ^ junk);
+#pragma GCC diagnostic pop
 		return;
 	}
 

@@ -1,8 +1,5 @@
 /* dcrt0.cc -- essentially the main() for the Cygwin dll
 
-   Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
-   2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -32,13 +29,13 @@ details. */
 #include "shared_info.h"
 #include "cygwin_version.h"
 #include "dll_init.h"
+#include "cygmalloc.h"
 #include "heap.h"
 #include "tls_pbuf.h"
 #include "exception.h"
 #include "cygxdr.h"
-#include "fenv.h"
+#include <fenv.h>
 #include "ntdll.h"
-#include "wow64.h"
 
 #define MAX_AT_FILE_LEVEL 10
 
@@ -394,7 +391,7 @@ check_sanity_and_sync (per_process *p)
     api_fatal ("cygwin DLL and APP are out of sync -- API version mismatch %u > %u",
 	       p->api_major, cygwin_version.api_major);
 
-#ifndef __x86_64__
+#ifdef __i386__
   /* This is a kludge to work around a version of _cygwin_common_crt0
      which overwrote the cxx_malloc field with the local DLL copy.
      Hilarity ensues if the DLL is not loaded while the process
@@ -409,18 +406,8 @@ child_info NO_COPY *child_proc_info;
 void
 child_info_fork::alloc_stack ()
 {
-  /* Make sure not to try a hard allocation if we have been forked off from
-     the main thread of a Cygwin process which has been started from a 64 bit
-     parent.  In that case the StackBase of the forked child is not the same
-     as the StackBase of the parent (== this.stackbase), but only because the
-     stack of the parent has been slightly rearranged.  See comment in
-     wow64_revert_to_original_stack for details. We check here if the
-     parent stack fits into the child stack. */
   PTEB teb = NtCurrentTeb ();
-  if (teb->Tib.StackBase != stackbase
-      && (!wincap.is_wow64 ()
-	  || stacklimit < teb->DeallocationStack
-	  || stackbase > teb->Tib.StackBase))
+  if (teb->Tib.StackBase != stackbase)
     {
       void *stack_ptr;
       size_t stacksize;
@@ -457,11 +444,9 @@ child_info_fork::alloc_stack ()
 	    api_fatal ("fork: couldn't allocate new stack guard page %p, %E",
 		       stack_ptr);
 	}
-      /* On post-XP systems, set thread stack guarantee matching the
-	 guardsize.  Note that the guardsize is one page bigger than
-	 the guarantee. */
-      if (wincap.has_set_thread_stack_guarantee ()
-	  && real_guardsize > wincap.def_guard_page_size ())
+      /* Set thread stack guarantee matching the guardsize.
+	 Note that the guardsize is one page bigger than the guarantee. */
+      if (real_guardsize > wincap.def_guard_page_size ())
 	{
 	  real_guardsize -= wincap.page_size ();
 	  SetThreadStackGuarantee (&real_guardsize);
@@ -567,7 +552,7 @@ get_cygwin_startup_info ()
 	  case _CH_FORK:
 	    in_forkee = true;
 	    should_be_cb = sizeof (child_info_fork);
-	    /* fall through */;
+	    fallthrough;
 	  case _CH_SPAWN:
 	  case _CH_EXEC:
 	    if (!should_be_cb)
@@ -586,7 +571,7 @@ get_cygwin_startup_info ()
 	    break;
 	  default:
 	    system_printf ("unknown exec type %u", res->type);
-	    /* intentionally fall through */
+	    fallthrough;
 	  case _CH_WHOOPS:
 	    res = NULL;
 	    break;
@@ -617,7 +602,7 @@ child_info_fork::handle_fork ()
   myself->uid = cygheap->user.real_uid;
   myself->gid = cygheap->user.real_gid;
 
-  child_copy (parent, false,
+  child_copy (parent, false, silentfail (),
 	      "dll data", dll_data_start, dll_data_end,
 	      "dll bss", dll_bss_start, dll_bss_end,
 	      "user heap", cygheap->user_heap.base, cygheap->user_heap.ptr,
@@ -641,19 +626,25 @@ child_info_fork::handle_fork ()
 
   /* step 2 now that the dll has its heap filled in, we can fill in the
      user's data and bss since user_data is now filled out. */
-  child_copy (parent, false,
+  child_copy (parent, false, silentfail (),
 	      "data", user_data->data_start, user_data->data_end,
 	      "bss", user_data->bss_start, user_data->bss_end,
 	      NULL);
 
   if (fixup_mmaps_after_fork (parent))
     api_fatal ("recreate_mmaps_after_fork_failed");
+
+  /* We need to occupy the address space for dynamically loaded dlls
+     before we allocate any dynamic object, or we may end up with
+     error "address space needed by <dll> is already occupied"
+     for no good reason (seen with some relocated dll). */
+  dlls.reserve_space ();
 }
 
 bool
 child_info_spawn::get_parent_handle ()
 {
-  parent = OpenProcess (PROCESS_VM_READ, false, parent_winpid);
+  parent = OpenProcess (PROCESS_VM_READ, FALSE, parent_winpid);
   moreinfo->myself_pinfo = NULL;
   return !!parent;
 }
@@ -662,17 +653,22 @@ void
 child_info_spawn::handle_spawn ()
 {
   extern void fixup_lockf_after_exec (bool);
-  HANDLE h;
+  HANDLE h = INVALID_HANDLE_VALUE;
   if (!dynamically_loaded || get_parent_handle ())
       {
 	cygheap_fixup_in_child (true);
 	memory_init ();
       }
+
+  cygheap->pid = cygpid;
+
+  /* Spawned process sets h to INVALID_HANDLE_VALUE to notify
+     pinfo::thisproc not to create another pid. */
   if (!moreinfo->myself_pinfo ||
       !DuplicateHandle (GetCurrentProcess (), moreinfo->myself_pinfo,
 			GetCurrentProcess (), &h, 0,
 			FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE))
-    h = NULL;
+    h = (type == _CH_SPAWN) ? INVALID_HANDLE_VALUE : NULL;
 
   /* Setup our write end of the process pipe.  Clear the one in the structure.
      The destructor should never be called for this but, it can't hurt to be
@@ -701,12 +697,11 @@ child_info_spawn::handle_spawn ()
 
   ready (true);
 
-  /* Keep pointer to parent open if we've execed so that pid will not be reused.
-     Otherwise, we no longer need this handle so close it.
-     Need to do this after debug_fixup_after_fork_exec or DEBUGGING handling of
-     handles might get confused. */
-  if (type != _CH_EXEC && child_proc_info->parent)
+  if (child_proc_info->parent)
     {
+      /* We no longer need this handle so close it.  Need to do
+	 this after debug_fixup_after_fork_exec or DEBUGGING handling of
+	 handles might get confused. */
       CloseHandle (child_proc_info->parent);
       child_proc_info->parent = NULL;
     }
@@ -728,15 +723,24 @@ init_windows_system_directory ()
 	api_fatal ("can't find windows system directory");
       windows_system_directory[windows_system_directory_length++] = L'\\';
       windows_system_directory[windows_system_directory_length] = L'\0';
-#ifndef __x86_64__
+      /* We need the Windows dir with NT prefix in path.cc.  Note that we
+	 don't append a backslash, because we need the dir without backslash
+	 for the environment. */
+      wcpcpy (windows_directory_buf, L"\\??\\");
+      windows_directory_length =
+	    GetSystemWindowsDirectoryW (windows_directory, MAX_PATH - 4);
+      RtlInitCountedUnicodeString (&windows_directory_path,
+	    windows_directory_buf,
+	    (windows_directory_length + 4) * sizeof (WCHAR));
+#ifdef __i386__
       system_wow64_directory_length =
-	GetSystemWow64DirectoryW (system_wow64_directory, MAX_PATH);
+	    GetSystemWow64DirectoryW (system_wow64_directory, MAX_PATH);
       if (system_wow64_directory_length)
 	{
 	  system_wow64_directory[system_wow64_directory_length++] = L'\\';
 	  system_wow64_directory[system_wow64_directory_length] = L'\0';
 	}
-#endif /* !__x86_64__ */
+#endif /* __i386__ */
     }
 }
 
@@ -756,7 +760,6 @@ dll_crt0_0 ()
   _impure_ptr->_stdin = &_impure_ptr->__sf[0];
   _impure_ptr->_stdout = &_impure_ptr->__sf[1];
   _impure_ptr->_stderr = &_impure_ptr->__sf[2];
-  _impure_ptr->_current_locale = "C";
   user_data->impure_ptr = _impure_ptr;
   user_data->impure_ptr_ptr = &_impure_ptr;
 
@@ -775,14 +778,6 @@ dll_crt0_0 ()
     {
       setup_cygheap ();
       memory_init ();
-#ifndef __x86_64__
-      /* WOW64 process on XP/64 or Server 2003/64?  Check if we have been
-	 started from 64 bit process and if our stack is at an unusual
-	 address.  Set wow64_needs_stack_adjustment if so.  Problem
-	 description in wow64_test_for_64bit_parent. */
-      if (wincap.wow64_has_secondary_stack ())
-	wow64_needs_stack_adjustment = wow64_test_for_64bit_parent ();
-#endif /* !__x86_64__ */
     }
   else
     {
@@ -902,11 +897,6 @@ dll_crt0_1 (void *)
      Need to do this before any helper threads start. */
   debug_init ();
 
-#ifdef NEWVFORK
-  cygheap->fdtab.vfork_child_fixup ();
-  main_vfork = vfork_storage.create ();
-#endif
-
   cygbench ("pre-forkee");
   if (in_forkee)
     {
@@ -994,6 +984,7 @@ dll_crt0_1 (void *)
       if (cp > __progname && ascii_strcasematch (cp, ".exe"))
 	*cp = '\0';
     }
+  SetThreadName (GetCurrentThreadId (), program_invocation_short_name);
 
   (void) xdr_set_vprintf (&cygxdr_vwarnx);
   cygwin_finished_initializing = true;
@@ -1016,7 +1007,6 @@ dll_crt0_1 (void *)
   /* Disable case-insensitive globbing */
   ignore_case_with_glob = false;
 
-  MALLOC_CHECK;
   cygbench (__progname);
 
   ld_preload ();
@@ -1071,7 +1061,7 @@ _dll_crt0 ()
      under our own control and avoids collision with the OS. */
   if (!dynamically_loaded)
     {
-      if (!in_forkee || fork_info->from_main)
+      if (!in_forkee)
 	{
 	  /* Must be static since it's referenced after the stack and frame
 	     pointer registers have been changed. */
@@ -1100,38 +1090,12 @@ _dll_crt0 ()
 	fork_info->alloc_stack ();
     }
 #else
-  /* Handle WOW64 process on XP/2K3 which has been started from native 64 bit
-     process.  See comment in wow64_test_for_64bit_parent for a full problem
-     description. */
-  if (wow64_needs_stack_adjustment && !dynamically_loaded)
-    {
-      /* Must be static since it's referenced after the stack and frame
-	 pointer registers have been changed. */
-      static PVOID allocationbase;
-
-      PVOID stackaddr = wow64_revert_to_original_stack (allocationbase);
-      if (stackaddr)
-      	{
-	  /* Set stack pointer to new address.  Set frame pointer to 0. */
-	  __asm__ ("\n\
-		   movl  %[ADDR], %%esp \n\
-		   xorl  %%ebp, %%ebp   \n"
-		   : : [ADDR] "r" (stackaddr));
-	  /* We're back on the original stack now.  Free up space taken by the
-	     former main thread stack and set DeallocationStack correctly. */
-	  VirtualFree (NtCurrentTeb ()->DeallocationStack, 0, MEM_RELEASE);
-	  NtCurrentTeb ()->DeallocationStack = allocationbase;
-	}
-      else
-	/* Fall back to respawning if creating a new stack fails. */
-	wow64_respawn_process ();
-    }
   main_environ = user_data->envptr;
   if (in_forkee)
     fork_info->alloc_stack ();
 #endif
 
-  _feinitialise ();
+  fesetenv (FE_DFL_ENV);
   _main_tls = &_my_tls;
   _main_tls->call ((DWORD (*) (void *, void *)) dll_crt0_1, NULL);
 }
@@ -1159,14 +1123,14 @@ dll_crt0 (per_process *uptr)
 extern "C" void
 cygwin_dll_init ()
 {
-#ifndef __x86_64__
+#ifdef __i386__
   static char **envp;
 #endif
   static int _fmode;
 
   user_data->magic_biscuit = sizeof (per_process);
 
-#ifndef __x86_64__
+#ifdef __i386__
   user_data->envptr = &envp;
 #endif
   user_data->fmode_ptr = &_fmode;
@@ -1196,15 +1160,6 @@ void __reg1
 do_exit (int status)
 {
   syscall_printf ("do_exit (%d), exit_state %d", status, exit_state);
-
-#ifdef NEWVFORK
-  vfork_save *vf = vfork_storage.val ();
-  if (vf != NULL && vf->pid < 0)
-    {
-      exit_state = ES_NOT_EXITING;
-      vf->restore_exit (status);
-    }
-#endif
 
   lock_process until_exit (true);
 
@@ -1275,7 +1230,7 @@ do_exit (int status)
    a reproducible value which could also be easily evaluated in cygwin_atexit.
    However, when building C++ applications with -fuse-cxa-atexit, G++ creates
    calls to __cxa_atexit using the *address* of __dso_handle as DSO handle.
-   
+
    So what we do here is this:  A call to __cxa_atexit from the application
    actually calls cygwin__cxa_atexit.  From dso_handle (which is either
    &__dso_handle, or __dso_handle == ImageBase or NULL) we fetch the dll
@@ -1320,7 +1275,7 @@ cygwin_atexit (void (*fn) (void))
      Workaround: If dlls.find fails, try to find the dll entry of the DLL
      containing fn.  If that works, proceed by calling __cxa_atexit, otherwise
      call atexit.
-     
+
      This *should* be sufficiently safe.  Ultimately, new applications will
      use the statically linked atexit function though, as outlined above. */
   if (!d)

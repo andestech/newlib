@@ -13,6 +13,88 @@
     identically. All of the Cygwin command-line utilities support the
     <literal>--help</literal> and <literal>--version</literal> options. </para>
 
+  <refentry id="chattr">
+    <refmeta>
+      <refentrytitle>chattr</refentrytitle>
+      <manvolnum>1</manvolnum>
+      <refmiscinfo class="manual">Cygwin Utilities</refmiscinfo>
+    </refmeta>
+
+    <refnamediv>
+      <refname>chattr</refname>
+      <refpurpose>Change file attributes</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <cmdsynopsis>
+	<command>chattr</command>
+	<arg>-RVf</arg>
+	<arg rep="repeat">
+	  <group choice="req">
+	    <arg choice="plain">+</arg>
+	    <arg choice="plain">-</arg>
+	    <arg choice="plain">=</arg>
+	  </group>
+	  <replaceable>MODE</replaceable>
+	</arg>
+	<arg rep="repeat"><replaceable>FILE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>chattr</command>
+	<group choice="plain">
+	  <arg choice="plain">-H</arg>
+	  <arg choice="plain">-v</arg>
+	</group>
+      </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1 id="chattr-options">
+      <title>Options</title>
+      <screen>
+  -R, --recursive     recursively apply the changes to directories and
+                      their contents
+  -V, --verbose       Be verbose during operation
+  -f, --force         suppress error messages
+  -H, --help          this help text
+  -v, --version       display the program version
+</screen>
+    </refsect1>
+
+    <refsect1 id="chattr-desc">
+      <title>Description</title>
+    <para>The <command>chattr</command> program allows to change file
+      attributes, namely DOS attributes, as well as making files sparse,
+      encrypt or compress them on FS level, or setting directories'
+      case sensitivity.
+    </para>
+
+    <para>The format of 'mode' is {+-=}[acCehnrsSt]</para>
+
+    <para>The operator '+' causes the selected attributes to be added to the
+      existing attributes of the files; '-' causes them to be removed; and
+      '=' causes them to be the only attributes that the files have.
+      A single '=' causes all attributes to be removed.</para>
+
+    <para>Supported attributes:</para>
+
+    <screen>
+  'r', 'Readonly':      file is read-only
+  'h', 'Hidden':        file or directory is hidden
+  's', 'System':        file or directory that the operating system uses
+  'a', 'Archive':       file or directory has the archive marker set
+  't', 'Temporary':     file is being used for temporary storage
+  'S', 'Sparse':        file is sparse
+  'c', 'Compressed':    file or directory is compressed
+  'n', 'Notindexed':    file or directory is not to be indexed by the
+			content indexing service
+  'e', 'Encrypted':     file is encrypted
+  'C', 'Casesensitive': directory is handled case sensitive
+			(Windows 10 1803 or later, local NTFS only,
+			 WSL must be installed)
+    </screen>
+    </refsect1>
+  </refentry>
+
     <refentry id="cygcheck">
       <refmeta>
 	<refentrytitle>cygcheck</refentrytitle>
@@ -26,20 +108,57 @@
       </refnamediv>
 
       <refsynopsisdiv>
-	<screen>
-cygcheck [-v] [-h] PROGRAM
-cygcheck -c [-d] [PACKAGE]
-cygcheck -s [-r] [-v] [-h]
-cygcheck -k
-cygcheck -f FILE [FILE]...
-cygcheck -l [PACKAGE]...
-cygcheck -p REGEXP
-cygcheck --delete-orphaned-installation-keys
-cygcheck -h
-	</screen>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg>-v</arg>
+	  <arg>-h</arg>
+	  <arg choice="plain"><replaceable>PROGRAM</replaceable></arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg choice="plain">-c</arg>
+	  <arg>-d</arg>
+	  <arg><replaceable>PACKAGE</replaceable></arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg choice="plain">-s</arg>
+	  <arg>-r</arg>
+	  <arg>-v</arg>
+	  <arg>-h</arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg choice="plain">-k</arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg choice="plain">-f</arg>
+	  <arg choice="plain" rep="repeat"><replaceable>FILE</replaceable></arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg choice="plain">-l</arg>
+	  <arg rep="repeat"><replaceable>PACKAGE</replaceable></arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg choice="plain">-p <replaceable>REGEXP</replaceable></arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <arg choice="plain">--delete-orphaned-installation-keys</arg>
+	</cmdsynopsis>
+	<cmdsynopsis>
+	  <command>cygcheck</command>
+	  <group choice="plain">
+	    <arg choice="plain">-h</arg>
+	    <arg choice="plain">-V</arg>
+	  </group>
+	</cmdsynopsis>
       </refsynopsisdiv>
 
-      <refsect1>
+      <refsect1 id="cygcheck-options">
 	<title>Options</title>
 	<screen>
 At least one command option or a PROGRAM is required, as shown above.
@@ -71,7 +190,7 @@ Note: -c, -f, and -l only report on packages that are currently installed. To
 </screen>
       </refsect1>
 
-<refsect1>
+<refsect1 id="cygcheck-desc">
   <title>Description</title>
     <para> The <command>cygcheck</command> program is a diagnostic utility for
       dealing with Cygwin programs. If you are familiar with
@@ -102,7 +221,10 @@ Note: -c, -f, and -l only report on packages that are currently installed. To
     <para> The <literal>-f</literal> option helps you to track down which
       package a file came from, and <literal>-l</literal> lists all files in a
       package. For example, to find out about
-      <filename>/usr/bin/less</filename> and its package: <example
+      <filename>/usr/bin/less</filename> and its package:
+    </para>
+
+    <example
       id="utils-cygcheck-ex"><title>Example <command>cygcheck</command>
       usage</title>
       <screen>
@@ -116,7 +238,7 @@ $ cygcheck -l less
 /usr/man/man1/less.1
 /usr/man/man1/lesskey.1
 </screen>
-      </example> </para>
+      </example>
 
     <para>The <literal>-h</literal> option prints additional helpful messages
       in the report, at the beginning of each section. It also adds table
@@ -150,7 +272,9 @@ $ cygcheck -l less
 
     <para>For example, perhaps you are getting an error because you are missing
       a certain DLL and you want to know which package includes that file:
-      <example id="utils-search-ex"><title>Searching all packages for a
+    </para>
+
+    <example id="utils-search-ex"><title>Searching all packages for a
       file</title>
       <screen>
 $ cygcheck -p 'cygintl-2\.dll'
@@ -170,7 +294,7 @@ Found 2 matches for '/ls\.exe'.
 coreutils-5.2.1-5         GNU core utilities (includes fileutils, sh-utils and textutils)
 coreutils-5.3.0-6         GNU core utilities (includes fileutils, sh-utils and textutils)
 </screen>
-      </example> </para>
+      </example>
 
     <para>Note that this option takes a regular expression, not a glob or
       wildcard. This means that you need to use <literal>.*</literal> if you
@@ -232,15 +356,47 @@ coreutils-5.3.0-6         GNU core utilities (includes fileutils, sh-utils and t
     </refnamediv>
 
     <refsynopsisdiv>
-    <screen>
-cygpath (-d|-m|-u|-w|-t TYPE) [-f FILE] [OPTION]... NAME...
-cygpath [-c HANDLE]
-cygpath [-ADHOPSW]
-cygpath [-F ID]
-    </screen>
+      <cmdsynopsis>
+	<command>cygpath</command>
+	<group choice="req">
+	  <arg choice="plain">-d</arg>
+	  <arg choice="plain">-m</arg>
+	  <arg choice="plain">-u</arg>
+	  <arg choice="plain">-w</arg>
+	  <arg choice="plain">-t <replaceable>TYPE</replaceable></arg>
+	</group>
+	<arg>-f <replaceable>FILE</replaceable></arg>
+	<arg>-i</arg>
+	<arg rep="repeat"><replaceable>CONVERSION_OPTION</replaceable></arg>
+	<arg rep="repeat" choice="plain"><replaceable>NAME</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>cygpath</command>
+	<arg>-c <replaceable>HANDLE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>cygpath</command>
+	<arg>-A</arg>
+	<group choice="req">
+	  <arg choice="plain">-D</arg>
+	  <arg choice="plain">-H</arg>
+	  <arg choice="plain">-O</arg>
+	  <arg choice="plain">-P</arg>
+	  <arg choice="plain">-S</arg>
+	  <arg choice="plain">-W</arg>
+	  <arg choice="plain">-F <replaceable>ID</replaceable></arg>
+	</group>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>cygpath</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="cygpath-options">
       <title>Options</title>
     <screen>
 Output type options:
@@ -288,7 +444,7 @@ Other options:
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="cygpath-desc">
       <title>Description</title>
     <para>The <command>cygpath</command> program is a utility that converts
       Windows native filenames to Cygwin POSIX-style pathnames and vice versa.
@@ -330,7 +486,7 @@ Other options:
     However, the cygdrive prefix can be changed by the user, so symbolic links
     created using the cygdrive prefix are not foolproof.  With
     <literal>-U</literal> cygpath will generate such paths prepended by the
-    virtual <pathname>/proc/cygdrive</pathname> symbolic link, which will
+    virtual <filename>/proc/cygdrive</filename> symbolic link, which will
     never change, so the created path is safe against changing the cygdrive
     prefix.</para>
 
@@ -419,14 +575,27 @@ explorer $XPATH &
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-dumper [OPTION] FILENAME WIN32PID
-      </screen>
+      <cmdsynopsis>
+	<command>dumper</command>
+	<arg>-n</arg>
+	<arg>-d</arg>
+	<arg>-q</arg>
+	<arg choice="plain"><replaceable>FILENAME</replaceable></arg>
+	<arg choice="plain"><replaceable>WIN32PID</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>dumper</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="dumper-options">
       <title>Options</title>
       <screen>
+-n, --nokill   don't terminate the dumped process
 -d, --verbose  be verbose while dumping
 -h, --help     output help information and exit
 -q, --quiet    be quiet while dumping (default)
@@ -434,7 +603,7 @@ dumper [OPTION] FILENAME WIN32PID
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="dumper-desc">
       <title>Description</title>
     <para>The <command>dumper</command> utility can be used to create a core
       dump of running Windows process. This core dump can be later loaded to
@@ -450,16 +619,19 @@ error_start=x:\path\to\dumper.exe
       be started whenever some program encounters a fatal error. </para>
 
     <para> <command>dumper</command> can be also be started from the command
-      line to create a core dump of any running process. Unfortunately, because
-      of a Windows API limitation, when a core dump is created and
-      <command>dumper</command> exits, the target process is terminated too. </para>
+      line to create a core dump of any running process.</para>
+
+    <para>For historical reasons, unless the <literal>-n</literal> option
+    is given, after the core dump is created and when the
+    <command>dumper</command> exits, the target process is also
+    terminated.</para>
 
     <para> To save space in the core dump, <command>dumper</command> doesn't
-      write those portions of target process' memory space that are loaded from
-      executable and dll files and are unchangeable, such as program code and
-      debug info. Instead, <command>dumper</command> saves paths to files which
+      write those portions of the target process's memory space that are loaded
+      from executable and dll files and are unchanged (e.g. program code).
+      Instead, <command>dumper</command> saves paths to the files which
       contain that data. When a core dump is loaded into gdb, it uses these
-      paths to load appropriate files. That means that if you create a core
+      paths to load the appropriate files. That means that if you create a core
       dump on one machine and try to debug it on another, you'll need to place
       identical copies of the executable and dlls in the same directories as on
       the machine where the core dump was created. </para>
@@ -479,13 +651,27 @@ error_start=x:\path\to\dumper.exe
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-getconf [-v specification] variable_name [pathname]
-getconf -a [pathname]
-      </screen>
+      <cmdsynopsis>
+	<command>getconf</command>
+	<arg>-v <replaceable>specification</replaceable></arg>
+	<arg choice="plain"><replaceable>variable_name</replaceable></arg>
+	<arg><replaceable>pathname</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>getconf</command>
+	<arg choice="plain">-a</arg>
+	<arg><replaceable>pathname</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>getconf</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="getconf-options">
       <title>Options</title>
       <screen>
   -v specification     Indicate specific version for which configuration
@@ -499,7 +685,7 @@ Other options:
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="getconf-desc">
       <title>Description</title>
     <para>The <command>getconf</command> utility prints the value of the
       configuration variable specified by <literal>variable_name</literal>. If
@@ -543,12 +729,21 @@ Other options:
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-getfacl [-adceEn] FILE [FILE2...]
-      </screen>
+      <cmdsynopsis>
+	<command>getfacl</command>
+	<arg>-adceEn</arg>
+	<arg choice="plain" rep="repeat"><replaceable>FILE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>getfacl</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="getfacl-options">
       <title>Options</title>
       <screen>
   -a, --access        display the file access control list only
@@ -565,7 +760,7 @@ line separates the ACLs for each file.
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="getfacl-desc">
       <title>Description</title>
     <para> For each argument that is a regular file, special file or directory,
       <command>getfacl</command> displays the owner, the group, and the ACL.
@@ -598,6 +793,65 @@ line separates the ACLs for each file.
     </refsect1>
   </refentry>
 
+  <refentry id="gmondump">
+    <refmeta>
+      <refentrytitle>gmondump</refentrytitle>
+      <manvolnum>1</manvolnum>
+      <refmiscinfo class="manual">Cygwin Utilities</refmiscinfo>
+    </refmeta>
+
+    <refnamediv>
+      <refname>gmondump</refname>
+      <refpurpose>Display formatted contents of profile data files</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <cmdsynopsis>
+	<command>gmondump</command>
+	<arg>-v</arg>
+	<arg rep="repeat">FILENAME</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>gmondump</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1 id="gmondump-options">
+      <title>Options</title>
+      <screen>
+  -h, --help             Display usage information and exit
+  -v, --verbose          Display more file details (toggle: default false)
+  -V, --version          Display version information and exit
+</screen>
+    </refsect1>
+
+    <refsect1 id="gmondump-desc">
+      <title>Description</title>
+    <para>The <command>gmondump</command> utility displays the contents of
+      one or more profile data files. Such files usually have names starting
+      with "gmon.out" and are created by a profiling program such as
+      <command>profiler</command> or <command>ssp</command>. Compiling your
+      gcc/g++ programs with option <literal>-pg</literal> also works.</para>
+    <para> By default, summary information is shown. You can use the
+      option <literal>-v</literal> to get more detailed displays.</para>
+    <para>Note that <command>gmondump</command> just displays the raw data;
+      one would usually use <command>gprof</command> to display the data in
+      a useful form incorporating symbolic info such as function names and
+      source line numbers.</para>
+    <para>Here is an example of <command>gmondump</command> operation:</para>
+<screen>
+$ gmondump gmon.out.21900.zstd.exe
+file gmon.out.21900.zstd.exe, gmon version 0x51879, sample rate 100
+  address range 0x0x100401000..0x0x1004cc668
+  numbuckets 208282, hitbuckets 1199, hitcount 12124, numrawarcs 0
+</screen>
+    </refsect1>
+  </refentry>
+
   <refentry id="kill">
     <refmeta>
       <refentrytitle>kill</refentrytitle>
@@ -611,24 +865,42 @@ line separates the ACLs for each file.
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-kill [-f] [-signal] [-s signal] pid1 [pid2 ...]
-kill -l [signal]
-      </screen>
+      <cmdsynopsis>
+	<command>kill</command>
+	<arg>-f</arg>
+	<arg>-signal</arg>
+	<arg>-s <replaceable>signal</replaceable></arg>
+	<arg choice="plain" rep="repeat"><replaceable>pid</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>kill</command>
+	<arg choice="plain">-l</arg>
+	<arg choice="repeat"><replaceable>signal</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>kill</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
+
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="kill-options">
       <title>Options</title>
       <screen>
  -f, --force     force, using win32 interface if necessary
  -l, --list      print a list of signal names
  -s, --signal    send signal (use kill --list for a list)
+ -W, --winpid    specified pids are windows PIDs, not Cygwin PIDs
+                 (use with extreme caution!)
  -h, --help      output usage information and exit
  -V, --version   output version information and exit
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="kill-desc">
       <title>Description</title>
     <para>The <command>kill</command> program allows you to send arbitrary
       signals to other Cygwin programs. The usual purpose is to end a running
@@ -648,7 +920,13 @@ $ /bin/kill --version
 </screen> which should give the Cygwin
       <command>kill</command> version number and copyright information. </para>
 
-    <para>Unless you specific the <literal>-f</literal> option, the "pid"
+    <para>The <literal>-f</literal> option uses Windows functions to
+      terminate processes forcefully. Use <literal>-f</literal> to
+      terminate native Windows processes not started by Cygwin processes.
+      <literal>-f</literal> can also be useful to terminate Cygwin processes
+      not answering to SIGKILL.</para>
+
+    <para>Unless you specific the <literal>-W</literal> option, the "pid"
       values used by <command>kill</command> are the Cygwin pids, not the
       Windows pids. To get a list of running programs and their Cygwin pids,
       use the Cygwin <command>ps</command> program. <command>ps -W</command>
@@ -729,12 +1007,21 @@ SIGUSR2     31    user defined signal 2
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-ldd [OPTION]... FILE...
-      </screen>
+      <cmdsynopsis>
+	<command>ldd</command>
+	<arg>-ruv</arg>
+	<arg rep="repeat" choice="plain"><replaceable>FILE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>ldd</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="ldd-options">
       <title>Options</title>
       <screen>
   -h, --help              print this help and exit
@@ -748,12 +1035,22 @@ ldd [OPTION]... FILE...
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="ldd-desc">
       <title>Description</title>
-    <para><command>ldd</command> prints the shared libraries (DLLs) an
-      executable or DLL is linked against. No modifying option is implemented
-      yet.</para>
+      <para><command>ldd</command> prints the shared libraries (DLLs) loaded
+      when running an executable or DLL.</para>
+
+    <refsect2 id="ldd-desc-security">
+      <title>Security</title>
+      <para>
+	<command>ldd</command> invokes the Windows loader on the file specified,
+	then uses the Windows debugging interface to report DLLs loaded, and
+	(for executables) to attempt to stop execution before the entrypoint.
+	Thus, you should never use ldd on an untrusted file.
+      </para>
+    </refsect2>
     </refsect1>
+
   </refentry>
 
   <refentry id="locale">
@@ -769,14 +1066,30 @@ ldd [OPTION]... FILE...
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-locale [-amvhV]
-locale [-ck] NAME
-locale [-usfnU]
-      </screen>
+      <cmdsynopsis>
+	<command>locale</command>
+	<arg>-amvhV</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>locale</command>
+	<arg>-ck</arg>
+	<arg choice="plain"><replaceable>NAME</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>locale</command>
+	<arg>-iusfnU</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>locale</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
+
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1  id="locale-options">
       <title>Options</title>
       <screen>
 System information:
@@ -792,6 +1105,7 @@ Modify output format:
 
 Default locale information:
 
+  -i, --input          Print current input locale
   -u, --user           Print locale of user's default UI language
   -s, --system         Print locale of system default UI language
   -f, --format         Print locale of user's regional format settings
@@ -806,25 +1120,39 @@ Other options:
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="locale-desc">
       <title>Description</title>
     <para><command>locale</command> without parameters prints information about
       the current locale environment settings.</para>
 
-    <para>The <literal>-u</literal>, <literal>-s</literal>,
-      <literal>-f</literal>, and <literal>-n</literal> options can be used to
-      request the various Windows locale settings. The purpose is to use this
-      command in scripts to set the POSIX locale variables.</para>
+    <para>The <literal>-i</literal>, <literal>-u</literal>,
+      <literal>-s</literal>, <literal>-f</literal>, and <literal>-n</literal>
+      options can be used to request the various Windows locale settings. The
+      purpose is to use this command in scripts to set the POSIX locale
+      variables.</para>
+
+    <para>The <literal>-i</literal> option prints the current input language.
+      This is called the "Input language" and basically equivalent to the
+      current keyboard layout setting.</para>
 
     <para>The <literal>-u</literal> option prints the current user's Windows UI
-      locale to stdout. In Windows Vista and Windows 7 this setting is called
-      the "Display Language"; there was no corresponding user setting in
-      Windows XP. The <literal>-s</literal> option prints the systems default
-      instead. The <literal>-f</literal> option prints the user's setting for
-      time, date, number and currency. That's equivalent to the setting in the
+      locale to stdout. In Windows this setting is called the
+      "Display Language".</para>
+
+    <para>The <literal>-s</literal> option prints the systems default instead.
+    </para>
+
+    <para>The <literal>-f</literal> option prints the user's setting for time,
+      date, number and currency. That's equivalent to the setting in the
       "Formats" or "Regional Options" tab in the "Region and Language" or
-      "Regional and Language Options" dialog. With the <literal>-U</literal>
-      option <command>locale</command> appends a ".UTF-8".</para>
+      "Regional and Language Options" dialog.</para>
+
+    <para>The <literal>-n</literal> option prints the system's default
+      language used for applications which don't support Unicode.</para>
+
+    <para>With the <literal>-U</literal> option <command>locale</command>
+      appends the string ".UTF-8" to enforce using UTF-8.  Using UTF-8
+      as codeset is recommended.</para>
 
     <para>Usage example:</para>
 
@@ -921,6 +1249,80 @@ bash$ locale noexpr
     </refsect1>
   </refentry>
 
+  <refentry id="lsattr">
+    <refmeta>
+      <refentrytitle>lsattr</refentrytitle>
+      <manvolnum>1</manvolnum>
+      <refmiscinfo class="manual">Cygwin Utilities</refmiscinfo>
+    </refmeta>
+
+    <refnamediv>
+      <refname>lsattr</refname>
+      <refpurpose>List file attributes</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <cmdsynopsis>
+	<command>lsattr</command>
+	<arg>-Radln</arg>
+	<arg rep="repeat"><replaceable>FILE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>lsattr</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1 id="lsattr-options">
+      <title>Options</title>
+      <screen>
+  -R, --recursive     recursively list attributes of directories and their
+                      contents
+  -V, --version       display the program version
+  -a, --all           list all files in directories, including files that
+                      start with '.'
+  -d, --directory     list directories like other files, rather than listing
+                      their contents.
+  -l, --long          print options using long names instead of single
+                      character abbreviations
+  -n, --no-headers    don't print directory headers when recursing
+  -h, --help          this help text
+</screen>
+    </refsect1>
+
+    <refsect1 id="lsattr-desc">
+      <title>Description</title>
+    <para>The <command>lsattr</command> program allows to list file
+      attributes, namely DOS attributes, file sparseness, FS level
+      encryption and compression state, as well as directories'
+      case sensitivity setting.
+    </para>
+
+    <para>Supported attributes:</para>
+
+    <screen>
+  'r', 'Readonly':      file is read-only, directory is system-marked
+  'h', 'Hidden':        file or directory is hidden
+  's', 'System':        file or directory that the operating system uses
+  'a', 'Archive':       file or directory has the archive marker set
+  't', 'Temporary':     file is being used for temporary storage
+  'S', 'Sparse':        file is sparse
+  'r', 'Reparse':       file or directory that has a reparse point
+  'c', 'Compressed':    file or directory is compressed
+  'o', 'Offline':       the data of a file is moved to offline storage
+  'n', 'Notindexed':    file or directory is not to be indexed by the
+                        content indexing service
+  'e', 'Encrypted':     file is encrypted
+  'C', 'Casesensitive': directory is handled case sensitive
+                        (Windows 10 1803 or later, local NTFS only,
+                         WSL must be installed)
+    </screen>
+    </refsect1>
+  </refentry>
+
   <refentry id="minidumper">
       <refmeta>
       <refentrytitle>minidumper</refentrytitle>
@@ -934,12 +1336,25 @@ bash$ locale noexpr
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-minidumper [OPTION] FILENAME WIN32PID
-      </screen>
+      <cmdsynopsis>
+	<command>minidumper</command>
+	<arg>-d</arg>
+	<arg>-n</arg>
+	<arg>-q</arg>
+	<arg>-t <replaceable>TYPE</replaceable></arg>
+	<arg choice="plain"><replaceable>FILENAME</replaceable></arg>
+	<arg choice="plain"><replaceable>WIN32PID</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>minidumper</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="minidumper-options">
       <title>Options</title>
       <screen>
 -t, --type     minidump type flags
@@ -951,7 +1366,7 @@ minidumper [OPTION] FILENAME WIN32PID
   </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="minidumper-desc">
       <title>Description</title>
   <para>
     The <command>minidumper</command> utility can be used to create a
@@ -987,21 +1402,40 @@ minidumper [OPTION] FILENAME WIN32PID
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-mkgroup [OPTION]...
-      </screen>
+      <cmdsynopsis>
+	<command>mkgroup</command>
+	<arg>
+	  <group choice="plain">
+	    <arg choice="plain">-l</arg>
+	    <arg choice="plain">-L</arg>
+	  </group>
+	  <arg><replaceable>MACHINE</replaceable></arg>
+	</arg>
+	<arg>-d <arg><replaceable>DOMAIN</replaceable></arg></arg>
+	<arg>-c</arg>
+	<arg>-S <replaceable>CHAR</replaceable></arg>
+	<arg>-o <replaceable>OFFSET</replaceable></arg>
+	<arg>-g <replaceable>GROUPNAME</replaceable></arg>
+	<arg>-b</arg>
+	<arg>-U  <replaceable>GROUPLIST</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>mkgroup</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="mkgroup-options">
       <title>Options</title>
       <screen>
-Options:
-
    -l,--local [machine]    Print local group accounts of \"machine\",
                            from local machine if no machine specified.
                            Automatically adding machine prefix for local
                            machine depends on settings in /etc/nsswitch.conf.
-   -L,--Local machine      Ditto, but generate groupname with machine prefix.
+   -L,--Local [machine]    Ditto, but generate groupname with machine prefix.
    -d,--domain [domain]    Print domain groups,
                            from current domain if no domain specified.
    -c,--current            Print current group.
@@ -1023,7 +1457,7 @@ groups on domain controllers and domain member machines.
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="mkgroup-desc">
       <title>Description</title>
      <para>Don't use this command to generate a local /etc/group file, unless you
      really need one.  See the Cygwin User's Guide for more information.
@@ -1091,21 +1525,40 @@ groups on domain controllers and domain member machines.
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-mkpasswd [OPTIONS]...
-      </screen>
+      <cmdsynopsis>
+	<command>mkpasswd</command>
+	<arg>
+	  <group choice="plain">
+	    <arg choice="plain">-l</arg>
+	    <arg choice="plain">-L</arg>
+	  </group>
+	  <arg><replaceable>MACHINE</replaceable></arg>
+	</arg>
+	<arg>-d <arg><replaceable>DOMAIN</replaceable></arg></arg>
+	<arg>-c</arg>
+	<arg>-S <replaceable>CHAR</replaceable></arg>
+	<arg>-o <replaceable>OFFSET</replaceable></arg>
+	<arg>-u <replaceable>USERNAME</replaceable></arg>
+	<arg>-b</arg>
+	<arg>-U  <replaceable>USERLIST</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>mkpassword</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="mkpasswd-options">
       <title>Options</title>
       <screen>
-    Options:
-
    -l,--local [machine]    Print local user accounts of \"machine\",
                            from local machine if no machine specified.
                            Automatically adding machine prefix for local
                            machine depends on settings in /etc/nsswitch.conf.
-   -L,--Local machine      Ditto, but generate username with machine prefix.
+   -L,--Local [machine]    Ditto, but generate username with machine prefix.
    -d,--domain [domain]    Print domain accounts,
                            from current domain if no domain specified.
    -c,--current            Print current user.
@@ -1130,7 +1583,7 @@ on domain controllers and domain member machines.
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="mkpasswd-desc">
       <title>Description</title>
     <para>Don't use this command to generate a local /etc/passwd file, unless you
     really need one.  See the Cygwin User's Guide for more information.</para>
@@ -1168,19 +1621,25 @@ on domain controllers and domain member machines.
       multiple domains) where the UIDs might match otherwise. The
       <literal>-p</literal> option causes <command>mkpasswd</command> to use
       the specified prefix instead of the account home dir or <literal>/home/
-      </literal>. For example, this command: <example id="utils-althome-ex"
+      </literal>. For example, this command:
+    </para>
+
+    <example id="utils-althome-ex"
       ><title>Using an alternate home root</title>
       <screen>
 <prompt>$</prompt> <userinput>mkpasswd -l -p "$(cygpath -H)" &gt; /etc/passwd</userinput>
 </screen>
-      </example> would put local users' home directories in the Windows
+    </example>
+
+    <para>
+      would put local users' home directories in the Windows
       'Profiles' directory. The <literal>-u</literal> option creates just an
       entry for the specified user. The <literal>-U</literal> option allows you
       to enumerate the standard UNIX users on a Samba machine. It's used
       together with <literal>-l samba-server</literal> or <literal>-L
       samba-server</literal>. The normal UNIX users are usually not enumerated,
       but they can show up as file owners in <command>ls -l</command> output.
-      </para>
+    </para>
     </refsect1>
   </refentry>
 
@@ -1197,14 +1656,44 @@ on domain controllers and domain member machines.
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-mount [OPTION] [&lt;win32path&gt; &lt;posixpath&gt;]
-mount -a
-mount &lt;posixpath&gt;
-      </screen>
+      <cmdsynopsis>
+	<command>mount</command>
+	<arg>-f</arg>
+	<arg>-o <arg choice="plain" rep="repeat"><replaceable>MOUNT_OPTION,</replaceable></arg></arg>
+	<arg choice="plain">
+	  <replaceable>WIN32PATH</replaceable>
+	  <replaceable>POSIXPATH</replaceable>
+	</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>mount</command>
+	<arg choice="plain">-a</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>mount</command>
+	<arg choice="plain"><replaceable>POSIXPATH</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>mount</command>
+	<arg>-m</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>mount</command>
+	<group choice="plain">
+	  <arg choice="plain">-c <replaceable>POSIXPATH</replaceable></arg>
+	  <arg choice="plain">-p</arg>
+	</group>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>mount</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
      </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="mount-options">
       <title>Options</title>
     <screen>
   -a, --all                     mount all filesystems mentioned in fstab
@@ -1220,7 +1709,7 @@ mount &lt;posixpath&gt;
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="mount-desc">
       <title>Description</title>
     <para>The <command>mount</command> program is used to map your drives and
       shares onto Cygwin's simulated POSIX directory tree, much like as is done
@@ -1459,16 +1948,59 @@ D: on /d type fat (binary,user,noumount)
 
     <refnamediv>
       <refname>passwd</refname>
-      <refpurpose>Change USER's password or password attributes.</refpurpose>
+      <refpurpose>Change password or password attributes</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-passwd [OPTION] [USER]
-      </screen>
+      <cmdsynopsis>
+	<command>passwd</command>
+	<group choice="plain">
+	  <arg>-S</arg>
+	  <arg choice="req">
+	    <group>
+	      <arg choice="plain">-l</arg>
+	      <arg choice="plain">-u</arg>
+	    </group>
+	    <group>
+	      <arg choice="plain">-c</arg>
+	      <arg choice="plain">-C</arg>
+	    </group>
+	    <group>
+	      <arg choice="plain">-e</arg>
+	      <arg choice="plain">-E</arg>
+	    </group>
+	    <group>
+	      <arg choice="plain">-p</arg>
+	      <arg choice="plain">-P</arg>
+	    </group>
+	  </arg>
+	</group>
+	<arg>-d <replaceable>SERVER</replaceable></arg>
+	<arg><replaceable>USER</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>passwd</command>
+	<arg choice="plain">-R</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+      <command>passwd</command>
+      <group choice="plain">
+	<arg choice="plain">-i <replaceable>NUM</replaceable></arg>
+	<arg choice="plain">-n <replaceable>MINDAYS</replaceable></arg>
+	<arg choice="plain">-x <replaceable>MAXDAYS</replaceable></arg>
+	<arg choice="plain">-L <replaceable>LEN</replaceable></arg>
+      </group>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>passwd</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="passwd-options">
       <title>Options</title>
       <screen>
 User operations:
@@ -1514,7 +2046,7 @@ specifying an empty password.
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="passwd-desc">
       <title>Description</title>
     <para> <command>passwd</command> changes passwords for user accounts. A
       normal user may only change the password for their own account, but
@@ -1624,12 +2156,21 @@ specifying an empty password.
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-pldd [OPTION...] PID
-      </screen>
+      <cmdsynopsis>
+	<command>pldd</command>
+	<arg choice="plain"><replaceable>PID</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>pldd</command>
+	<group choice="plain">
+	  <arg choice="plain">-?</arg>
+	  <arg choice="plain">--usage</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="pldd-options">
       <title>Options</title>
       <screen>
   -?, --help                 Give this help list
@@ -1638,11 +2179,97 @@ pldd [OPTION...] PID
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="pldd-desc">
       <title>Description</title>
     <para><command>pldd</command> prints the shared libraries (DLLs) loaded by
       the process with the given PID.</para>
     </refsect1>
+  </refentry>
+
+  <refentry id="profiler">
+    <refmeta>
+      <refentrytitle>profiler</refentrytitle>
+      <manvolnum>1</manvolnum>
+      <refmiscinfo class="manual">Cygwin Utilities</refmiscinfo>
+    </refmeta>
+
+    <refnamediv>
+      <refname>profiler</refname>
+      <refpurpose>Sampling profiler of Cygwin programs with their DLLs</refpurpose>
+    </refnamediv>
+
+    <refsynopsisdiv>
+      <cmdsynopsis>
+	<command>profiler</command>
+	<arg>-defw</arg>
+	<arg>-o <replaceable>FILENAME</replaceable></arg>
+	<arg>-s <replaceable>N</replaceable></arg>
+	<group choice="plain">
+	  <arg choice="plain">
+	    <arg choice="plain"><replaceable>PROGRAM</replaceable></arg>
+	    <arg rep="repeat" choice="plain"><replaceable>ARG</replaceable></arg>
+	  </arg>
+	  <arg choice="plain">-p <replaceable>PID</replaceable></arg>
+	</group>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>profiler</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
+    </refsynopsisdiv>
+
+    <refsect1 id="profiler-options">
+      <title>Options</title>
+      <screen>
+  -d, --debug            Display debugging messages (toggle: default false)
+  -e, --events           Display Windows DEBUG_EVENTS (toggle: default false)
+  -f, --fork-profile     Profiles child processes (toggle: default false)
+  -h, --help             Display usage information and exit
+  -o, --output=FILENAME  Write output to file FILENAME rather than stdout
+  -p, --pid=N            Attach to running program with Cygwin pid N
+                         ...                    or with Windows pid -N
+  -s, --sample-rate=N    Set IP sampling rate to N Hz (default 100)
+  -v, --verbose          Display more status messages (toggle: default false)
+  -V, --version          Display version information and exit
+  -w, --new-window       Launch given command in a new window
+</screen>
+    </refsect1>
+
+    <refsect1 id="profiler-desc">
+      <title>Description</title>
+    <para>The <command>profiler</command> utility executes a given program and
+      any children of that program, collecting the location of the CPU
+      instruction pointer (IP) many times per second. (It is optional to
+      collect this info from child processes.) This info gives a profile
+      of the program's execution, showing where the most time is being spent.
+      This profiling technique is called "IP sampling".</para>
+
+    <para>A novel feature of <command>profiler</command> is that time spent in
+      DLLs loaded with or by your program is profiled too. You use
+      <command>gprof</command> to process and display the resulting profile
+      information. In this fashion you can determine whether your own code,
+      the Cygwin DLL, or another DLL has "hot spots" that might benefit from
+      tuning.</para>
+
+    <para>(See also <command>ssp</command>, another profiler that
+      operates in a different fashion: stepping by instruction. This can
+      provide a different view on your program's operation.)</para>
+
+    <para>Here is an example of <command>profiler</command> operation:</para>
+<screen>
+$ profiler du -khs .
+22G     .
+97 samples across 83 buckets written to gmon.out.5908.cygwin1.dll
+4 samples across 4 buckets written to gmon.out.5908.KernelBase.dll
+1 sample across 1 bucket written to gmon.out.5908.kernel32.dll
+7318 samples across 42 buckets written to gmon.out.5908.ntdll.dll
+5 samples across 4 buckets written to gmon.out.5908.du.exe
+</screen>
+    </refsect1>
+
   </refentry>
 
   <refentry id="ps">
@@ -1658,12 +2285,22 @@ pldd [OPTION...] PID
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-ps [-aefls] [-u UID]
-      </screen>
+      <cmdsynopsis>
+	<command>ps</command>
+	<arg>-aeflsW</arg>
+	<arg>-u <replaceable>UID</replaceable></arg>
+	<arg>-p <replaceable>PID</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>ps</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="ps-options">
       <title>Options</title>
       <screen>
  -a, --all       show processes of all users
@@ -1680,7 +2317,7 @@ With no options, ps outputs the long format by default
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="ps-desc">
       <title>Description</title>
     <para>The <command>ps</command> program gives the status of all the Cygwin
       processes running on the system (ps = "process status"). Due to the
@@ -1731,12 +2368,90 @@ With no options, ps outputs the long format by default
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-regtool [OPTION] (add|check|get|list|remove|unset|load|unload|save) KEY
-      </screen>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg>-qvwW</arg>
+	<arg choice="plain">add|check|get|list|remove|unset|load|unload|save</arg>
+	<arg choice="plain"><replaceable>KEY</replaceable></arg>
+	<group>
+	  <arg choice="plain"><replaceable>PATH</replaceable></arg>
+	  <arg choice="plain" rep="repeat"><replaceable>DATA</replaceable></arg>
+	</group>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg choice="plain">add</arg>
+	<arg choice="plain"><replaceable>KEY\SUBKEY</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg choice="plain">check</arg>
+	<arg choice="plain"><replaceable>KEY</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg>-bnx</arg>
+	<arg choice="plain">get</arg>
+	<arg choice="plain"><replaceable>KEY</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg>-klp</arg>
+	<arg choice="plain">list</arg>
+	<arg choice="plain"><replaceable>KEY</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg choice="plain">remove</arg>
+	<arg choice="plain"><replaceable>KEY</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg>-bDeimnQsf</arg>
+	<arg choice="plain">set</arg>
+	<arg choice="plain"><replaceable>KEY\VALUE</replaceable></arg>
+	<arg rep="repeat"><replaceable>DATA</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg>-f</arg>
+	<arg choice="plain">unset</arg>
+	<arg choice="plain"><replaceable>KEY\VALUE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg choice="plain">load</arg>
+	<arg choice="plain"><replaceable>KEY\SUBKEY</replaceable></arg>
+	<arg choice="plain"><replaceable>PATH</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg choice="plain">unload</arg>
+	<arg choice="plain"><replaceable>KEY\SUBKEY</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg choice="plain">save</arg>
+	<arg choice="plain"><replaceable>KEY\SUBKEY</replaceable></arg>
+	<arg choice="plain"><replaceable>PATH</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<arg>-f</arg>
+	<arg choice="plain">restore</arg>
+	<arg choice="plain"><replaceable>KEY/SUBKEY</replaceable></arg>
+	<arg choice="plain"><replaceable>PATH</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>regtool</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="regtool-options">
       <title>Options</title>
       <screen>
 Actions:
@@ -1803,12 +2518,15 @@ remote host in either \\hostname or hostname: format and prefix is any of:
   users    HKU   HKEY_USERS
 
 You can use forward slash ('/') as a separator instead of backslash, in
-that case backslash is treated as escape character
-Example: regtool get '\user\software\Microsoft\Clock\iFormat'
+that case backslash is treated as an escape character.
+You can also supply the registry path prefix /proc/registry{,32,64}/ to
+use path completion.
+Example:
+  regtool list '/HKLM/SOFTWARE/Classes/MIME/Database/Content Type/audio\\/wav'
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="regtool-desc">
       <title>Description</title>
     <para>The <command>regtool</command> program allows shell scripts to access
       and modify the Windows registry. Note that modifying the Windows registry
@@ -1921,32 +2639,56 @@ Example: regtool get '\user\software\Microsoft\Clock\iFormat'
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-setfacl [-n] {-f ACL_FILE | -s acl_entries} FILE...
-setfacl [-n] {[-bk]|[-x acl_entries] [-m acl_entries]} FILE...
-      </screen>
+      <cmdsynopsis>
+	<command>setfacl</command>
+	<arg>-n</arg>
+	<group choice="req">
+	  <arg choice="plain">-f <replaceable>ACL_FILE</replaceable></arg>
+	  <arg choice="plain">-s <replaceable>acl_entries</replaceable></arg>
+	</group>
+	<arg choice="plain" rep="repeat"><replaceable>FILE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>setfacl</command>
+	<arg>-n</arg>
+	<arg choice="req">
+	  <group choice="plain">
+	    <arg>-bk</arg>
+	    <arg>-x <replaceable>acl_entries</replaceable></arg>
+	  </group>
+	  <arg>-m <replaceable>acl_entries</replaceable></arg>
+	</arg>
+	<arg choice="plain" rep="repeat"><replaceable>FILE</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>setfacl</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
      </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="setfacl-options">
       <title>Options</title>
       <screen>
-  -b, --remove-all       remove all extended ACL entries\n"
-  -x, --delete           delete one or more specified ACL entries\n"
-  -f, --file             set ACL entries for FILE to ACL entries read\n"
-                         from ACL_FILE\n"
-  -k, --remove-default   remove all default ACL entries\n"
-  -m, --modify           modify one or more specified ACL entries\n"
-  -n, --no-mask          don't recalculate the effective rights mask\n"
-      --mask             do recalculate the effective rights mask\n"
-  -s, --set              set specified ACL entries on FILE\n"
-  -V, --version          print version and exit\n"
-  -h, --help             this help text\n"
+  -b, --remove-all       remove all extended ACL entries
+  -x, --delete           delete one or more specified ACL entries
+  -f, --set-file         set ACL entries for FILE to ACL entries read
+                         from ACL_FILE
+  -k, --remove-default   remove all default ACL entries
+  -m, --modify           modify one or more specified ACL entries
+  -n, --no-mask          don't recalculate the effective rights mask
+      --mask             do recalculate the effective rights mask
+  -s, --set              set specified ACL entries on FILE
+  -V, --version          print version and exit
+  -h, --help             this help text
 
-At least one of (-b, -x, -f, -k, -m, -s) must be specified\n"
+At least one of (-b, -x, -f, -k, -m, -s) must be specified
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="setfacl-desc">
       <title>Description</title>
     <para> For each file given as parameter, <command>setfacl</command> will
       either replace its complete ACL (<literal>-s</literal>,
@@ -1999,7 +2741,7 @@ At least one of (-b, -x, -f, -k, -m, -s) must be specified\n"
          d[efault]:o[ther][:]
 </screen> </para>
 
-    <para> <literal>-f</literal>,<literal>--file</literal> Take the Acl_entries
+    <para> <literal>-f</literal>,<literal>--set-file</literal> Take the Acl_entries
       from ACL_FILE one per line. Whitespace characters are ignored, and the
       character "#" may be used to start a comment. The special filename "-"
       indicates reading from stdin. Note that you can use this with
@@ -2070,12 +2812,23 @@ $ getfacl source_file | setfacl -f - target_file
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-setmetamode [metabit|escprefix]
-      </screen>
+      <cmdsynopsis>
+	<command>setmetamode</command>
+	<group>
+	  <arg choice="plain">metabit</arg>
+	  <arg choice="plain">escprefix</arg>
+	</group>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>setmetamode</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="setmetamode-options">
       <title>Options</title>
       <screen>
   Without argument, it shows the current meta key mode.
@@ -2090,7 +2843,7 @@ Other options:
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="setmetamode-desc">
       <title>Description</title>
     <para><command>setmetamode</command> can be used to determine and set the
       key code sent by the meta (aka <literal>Alt</literal>) key.</para>
@@ -2104,18 +2857,37 @@ Other options:
       <refmiscinfo class="manual">Cygwin Utilities</refmiscinfo>
     </refmeta>
 
+    <refentryinfo>
+      <author>
+	<firstname>DJ</firstname>
+	<surname>Delorie</surname>
+	<contrib>Original Author</contrib>
+      </author>
+    </refentryinfo>
+
     <refnamediv>
       <refname>ssp</refname>
-      <refpurpose>Single-step profile COMMAND</refpurpose>
+      <refpurpose>The Single Step Profiler</refpurpose>
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-ssp [options] low_pc high_pc command...
-      </screen>
+      <cmdsynopsis>
+	<command>ssp</command>
+	<arg>-cdelstv</arg>
+	<arg choice="plain"><replaceable>low_pc</replaceable></arg>
+	<arg choice="plain"><replaceable>high_pc</replaceable></arg>
+	<arg choice="plain" rep="repeat"><replaceable>command</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>ssp</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="ssp-options">
       <title>Options</title>
       <screen>
  -c, --console-trace  trace every EIP value to the console. *Lots* slower.
@@ -2137,11 +2909,8 @@ Example: ssp 0x401000 0x403000 hello.exe
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="ssp-desc">
       <title>Description</title>
-    <para> SSP - The Single Step Profiler </para>
-
-    <para> Original Author: DJ Delorie </para>
 
     <para> The SSP is a program that uses the Win32 debug API to run a program
       one ASM instruction at a time. It records the location of each
@@ -2150,6 +2919,10 @@ Example: ssp 0x401000 0x403000 hello.exe
       profiling program <command>gprof</command>, although
       <command>gprof</command> will claim the values are seconds, they really
       are instruction counts. More on that later. </para>
+
+    <para>(See also <command>profiler</command>, another profiler that
+      operates in a different fashion: IP sampling. This can provide a
+      different view on your program's operation.)</para>
 
     <para> Because the SSP was originally designed to profile the Cygwin DLL,
       it does not automatically select a block of code to report statistics on.
@@ -2284,13 +3057,31 @@ $ ssp <literal>-v</literal> <literal>-s</literal> <literal>-l</literal> <literal
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-strace [OPTIONS] &lt;command-line&gt;
-strace [OPTIONS] -p &lt;pid&gt;
-      </screen>
+      <cmdsynopsis>
+	<command>strace</command>
+	<arg>-defnqtuw</arg>
+	<arg>-b <replaceable>SIZE</replaceable></arg>
+	<arg>-m <replaceable>MASK</replaceable></arg>
+	<arg>-o <replaceable>FILENAME</replaceable></arg>
+	<arg>-f <replaceable>PERIOD</replaceable></arg>
+	<group choice="req">
+	  <arg choice="plain" rep="repeat"><replaceable>command-line</replaceable></arg>
+	  <arg choice="plain">
+	    <arg>-T</arg>
+	    <arg choice="plain">-p <replaceable>pid</replaceable></arg>
+	  </arg>
+	</group>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>strace</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1  id="strace-options">
       <title>Options</title>
       <screen>
   -b, --buffer-size=SIZE       set size of output file buffer
@@ -2334,7 +3125,7 @@ strace [OPTIONS] -p &lt;pid&gt;
     wm       0x000400 (_STRACE_WM)       Trace Windows msgs (enable _strace_wm).
     sigp     0x000800 (_STRACE_SIGP)     Trace signal and process handling.
     minimal  0x001000 (_STRACE_MINIMAL)  Very minimal strace output.
-    pthread  0x002000 (_STRACE_PTHREAD)	Pthread calls.
+    pthread  0x002000 (_STRACE_PTHREAD)  Pthread calls.
     exitdump 0x004000 (_STRACE_EXITDUMP) Dump strace cache on exit.
     system   0x008000 (_STRACE_SYSTEM)   Serious error; goes to console and log.
     nomutex  0x010000 (_STRACE_NOMUTEX)  Don't use mutex for synchronization.
@@ -2345,7 +3136,7 @@ strace [OPTIONS] -p &lt;pid&gt;
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1  id="strace-desc">
       <title>Description</title>
     <para>The <command>strace</command> program executes a program, and
       optionally the children of the program, reporting any Cygwin DLL output
@@ -2379,12 +3170,16 @@ $ strace -o tracing_output -w sh -c 'while true; do echo "tracing..."; done' &am
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-tzset [OPTION]
-      </screen>
+      <cmdsynopsis>
+	<command>tzset</command>
+	<group>
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="tzset-options">
       <title>Options</title>
       <screen>
 Options:
@@ -2393,8 +3188,9 @@ Options:
       </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="tzset-desc">
       <title>Description</title>
+      <para>
       Use tzset to set your TZ variable. In POSIX-compatible shells like bash,
       dash, mksh, or zsh:
       <screen>
@@ -2404,6 +3200,7 @@ export TZ=$(tzset)
       <screen>
 setenv TZ `tzset`
       </screen>
+      </para>
 
     <para>The <command>tzset</command> tool reads the current timezone from
       Windows and generates a POSIX-compatible timezone information for the TZ
@@ -2425,12 +3222,24 @@ setenv TZ `tzset`
     </refnamediv>
 
     <refsynopsisdiv>
-      <screen>
-umount [OPTION] [&lt;posixpath&gt;]
-      </screen>
+      <cmdsynopsis>
+	<command>umount</command>
+	<arg choice="plain"><replaceable>POSIXPATH</replaceable></arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>umount</command>
+	<arg choice="plain">-U</arg>
+      </cmdsynopsis>
+      <cmdsynopsis>
+	<command>umount</command>
+	<group choice="plain">
+	  <arg choice="plain">-h</arg>
+	  <arg choice="plain">-V</arg>
+	</group>
+      </cmdsynopsis>
     </refsynopsisdiv>
 
-    <refsect1>
+    <refsect1 id="umount-options">
       <title>Options</title>
       <screen>
   -h, --help                    output usage information and exit
@@ -2439,7 +3248,7 @@ umount [OPTION] [&lt;posixpath&gt;]
 </screen>
     </refsect1>
 
-    <refsect1>
+    <refsect1 id="umount-desc">
       <title>Description</title>
     <para>The <command>umount</command> program removes mounts from the mount
       table in the current session. If you specify a POSIX path that

@@ -1,8 +1,5 @@
 /* sec_helper.cc: NT security helper functions
 
-   Copyright 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010,
-   2011, 2012, 2013, 2014, 2015 Red Hat, Inc.
-
    Written by Corinna Vinschen <corinna@vinschen.de>
 
 This file is part of Cygwin.
@@ -133,7 +130,7 @@ cygpsid::get_id (BOOL search_grp, int *type, cyg_ldap *pldap)
 		  if (pldap->open (cygheap->dom.get_rfc2307_domain ())
 		      == NO_ERROR)
 		    map_gid = pldap->remap_gid (gid);
-		  if (map_gid == ILLEGAL_GID) 
+		  if (map_gid == ILLEGAL_GID)
 		    map_gid = MAP_UNIX_TO_CYGWIN_ID (gid);
 		  cygheap->ugid_cache.add_gid (gid, map_gid);
 		}
@@ -172,10 +169,16 @@ cygpsid::get_id (BOOL search_grp, int *type, cyg_ldap *pldap)
 	}
       else if ((pw = internal_getpwsid (*this, pldap)))
 	id = pw->pw_uid;
-      if (id != ILLEGAL_UID && type)
-	*type = USER;
+      if (id != ILLEGAL_UID)
+	{
+	  if (type)
+	    *type = USER;
+	  return id;
+	}
     }
-  return id;
+  if (type)
+    *type = 0; /* undefined type */
+  return ILLEGAL_UID;
 }
 
 PWCHAR
@@ -631,11 +634,6 @@ _recycler_sd (void *buf, bool users, bool dir)
     return NULL;
   RtlCreateSecurityDescriptor (psd, SECURITY_DESCRIPTOR_REVISION);
   PACL dacl = (PACL) (psd + 1);
-  /* Pre-Vista, the per-user recycler dir has a rather too complicated
-     ACL by default, which has distinct ACEs for inheritable and non-inheritable
-     permissions.  However, this ACL is practically equivalent to the ACL
-     created since Vista.  Therefore we simplify our job here and create the
-     pre-Vista permissions the same way as on Vista and later. */
   RtlCreateAcl (dacl, MAX_DACL_LEN (3), ACL_REVISION);
   RtlAddAccessAllowedAceEx (dacl, ACL_REVISION,
 			    dir ? SUB_CONTAINERS_AND_OBJECTS_INHERIT
@@ -829,12 +827,16 @@ authz_ctx::get_user_attribute (mode_t *attribute, PSECURITY_DESCRIPTOR psd,
   if (RtlEqualSid (user_sid, cygheap->user.sid ())
       && !cygheap->user.issetuid ())
     {
+      /* Avoid lock in default case. */
       if (!user_ctx_hdl)
 	{
 	  authz_guard.acquire ();
-	  if (!AuthzInitializeContextFromToken (0, hProcToken, authz, NULL,
-						authz_dummy_luid, NULL,
-						&user_ctx_hdl))
+	  /* Check user_ctx_hdl again under lock to avoid overwriting
+	     user_ctx_hdl if it has already been initialized. */
+	  if (!user_ctx_hdl
+	      && !AuthzInitializeContextFromToken (0, hProcToken, authz, NULL,
+						   authz_dummy_luid, NULL,
+						   &user_ctx_hdl))
 	    debug_printf ("AuthzInitializeContextFromToken, %E");
 	  authz_guard.release ();
 	}

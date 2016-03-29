@@ -1,7 +1,5 @@
 ## Process this file with automake to generate Makefile.in
 
-AUTOMAKE_OPTIONS = cygnus
-
 SUBDIRS = $(sys_dir) .
 
 if HAVE_SYS_DIR
@@ -32,6 +30,8 @@ $(sys_dir)/$(CRT0): ; @true
 CLEANFILES = $(CRT0)
 
 doc:
+
+docbook:
 
 ACLOCAL_AMFLAGS = -I ../.. -I ../../..
 CONFIG_STATUS_DEPENDENCIES = $(newlib_basedir)/configure.host

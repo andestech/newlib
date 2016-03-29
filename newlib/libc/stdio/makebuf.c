@@ -5,7 +5,7 @@
  * Redistribution and use in source and binary forms are permitted
  * provided that the above copyright notice and this paragraph are
  * duplicated in all such forms and that any documentation,
- * advertising materials, and other materials related to such
+ * and/or other materials related to such
  * distribution and use acknowledge that the software was developed
  * by the University of California, Berkeley.  The name of the
  * University may not be used to endorse or promote products derived
@@ -34,12 +34,11 @@
  * optimization) right after the _fstat() that finds the buffer size.
  */
 
-_VOID
-_DEFUN(__smakebuf_r, (ptr, fp),
-       struct _reent *ptr _AND
+void
+__smakebuf_r (struct _reent *ptr,
        register FILE *fp)
 {
-  register _PTR p;
+  register void *p;
   int flags;
   size_t size;
   int couldbetty;
@@ -55,7 +54,7 @@ _DEFUN(__smakebuf_r, (ptr, fp),
     {
       if (!(fp->_flags & __SSTR))
 	{
-	  fp->_flags |= __SNBF;
+	  fp->_flags = (fp->_flags & ~__SLBF) | __SNBF;
 	  fp->_bf._base = fp->_p = fp->_nbuf;
 	  fp->_bf._size = 1;
 	}
@@ -67,7 +66,7 @@ _DEFUN(__smakebuf_r, (ptr, fp),
       fp->_bf._base = fp->_p = (unsigned char *) p;
       fp->_bf._size = size;
       if (couldbetty && _isatty_r (ptr, fp->_file))
-	fp->_flags |= __SLBF;
+	fp->_flags = (fp->_flags & ~__SNBF) | __SLBF;
       fp->_flags |= flags;
     }
 }
@@ -76,10 +75,9 @@ _DEFUN(__smakebuf_r, (ptr, fp),
  * Internal routine to determine `proper' buffering for a file.
  */
 int
-_DEFUN(__swhatbuf_r, (ptr, fp, bufsize, couldbetty),
-	struct _reent *ptr _AND
-	FILE *fp _AND
-	size_t *bufsize _AND
+__swhatbuf_r (struct _reent *ptr,
+	FILE *fp,
+	size_t *bufsize,
 	int *couldbetty)
 {
 #ifdef _FSEEK_OPTIMIZATION

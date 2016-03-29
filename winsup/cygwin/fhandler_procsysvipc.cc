@@ -1,7 +1,5 @@
 /* fhandler_procsysvipc.cc: fhandler for /proc/sysvipc virtual filesystem
 
-   Copyright 2011, 2012, 2013, 2014 Red Hat, Inc.
-
 This file is part of Cygwin.
 
 This software is a copyrighted work licensed under the terms of the
@@ -28,7 +26,7 @@ details. */
 #include <sys/param.h>
 #include <ctype.h>
 
-#define _COMPILING_NEWLIB
+#define _LIBC
 #include <dirent.h>
 
 #define _KERNEL
@@ -54,9 +52,6 @@ static const virt_tab_t procsysvipc_tab[] =
 static const int PROCSYSVIPC_LINK_COUNT =
   (sizeof (procsysvipc_tab) / sizeof (virt_tab_t)) - 1;
 
-/* Returns 0 if path doesn't exist, >0 if path is a directory,
- * -1 if path is a file.
- */
 virtual_ftype_t
 fhandler_procsysvipc::exists ()
 {
@@ -166,7 +161,7 @@ fhandler_procsysvipc::open (int flags, mode_t mode)
 	}
       else
 	{
-	  flags |= O_DIROPEN;
+	  diropen = true;
 	  goto success;
 	}
     }
