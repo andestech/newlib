@@ -160,13 +160,12 @@ _start:
 	beqz	$r7, .L_clean_reg	! if there isn't _arg_init, go main
 	addi	$sp, $sp, -512		! allocate space for command line
 					! and arguments
-	move	$r6, $sp		! r6 = buffer addr of cmd line
-	move	$r0, $r6		! r0 = buffer addr of cmd line
+	move	$r0, $sp		! r0 = buffer addr of cmd line
 	syscall	SYS_getcmdline		! get cmd line
-	move	$r0, $r6		! r0 = buffer addr of cmd line
-	addi	$r1, $r6, 256		! r1 = argv
+	move	$r0, $sp		! r0 = buffer addr of cmd line
+	addi	$r1, $sp, 256		! r1 = argv
 	jral	$r7			! init argc/argv
-	addi	$r1, $r6, 256		! r1 = argv
+	addi	$r1, $sp, 256		! r1 = argv
 	b	.L_call_main
 
 .L_clean_reg:
