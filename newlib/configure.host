@@ -214,6 +214,11 @@ case "${host_cpu}" in
   mep)
 	machine_dir=mep
 	;;
+  riscv*)
+	machine_dir=riscv
+	newlib_cflags="${newlib_cflags} -DHAVE_RENAME"
+	default_newlib_atexit_dynamic_alloc="no"
+	;;
   mips*)
 	machine_dir=mips
 	;;
@@ -785,6 +790,9 @@ case "${host}" in
 	;;
   powerpcle-*-pe)
 	newlib_cflags="${newlib_cflags} -DHAVE_OPENDIR -DHAVE_RENAME -DHAVE_FCNTL -D_NO_POSIX_SPAWN"
+	syscall_dir=syscalls
+	;;
+  riscv*-*-*)
 	syscall_dir=syscalls
 	;;
   sh*-*-*)
