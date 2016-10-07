@@ -430,25 +430,23 @@ long sysconf(int name)
 // sbrk                                                                 
 //----------------------------------------------------------------------
 // Increase program data space. As malloc and related functions depend
-// on this, it is useful to have a working implementation.
-// This version is just functional, it doesn't check any memory overflow
-// and leak. 
+// on this, it is useful to have a working implementation. The following
+// is suggested by the newlib docs and suffices for a standalone
+// system.
 
-void *
-sbrk (ptrdiff_t incr)
+void* sbrk(ptrdiff_t incr)
 {
-  extern char _end;
-  static char *heap_end;
-  char *result;
+  extern unsigned char _end[]; // Defined by linker
+  static unsigned long heap_end;
 
   if (heap_end == 0)
-    heap_end = &_end;
+    heap_end = (long)_end;
+  if (syscall_errno(SYS_brk, heap_end + incr, 0, 0, 0) != heap_end + incr)
+    return (void*)-1;
 
-  result = heap_end;
   heap_end += incr;
-  return (void *) result;
+  return (void*)(heap_end - incr);
 }
-
 
 //------------------------------------------------------------------------
 // _exit                                                                
