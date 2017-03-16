@@ -59,8 +59,14 @@ __internal_syscall(long n, long _a0, long _a1, long _a2, long _a3)
   register long sys_id asm("a7") = n;
 #endif
 
+#ifdef __riscv_virtual_hosting
+  sys_id = (sys_id << 16) | sys_id;
+  asm volatile ("sbreak"
+		: "+r"(a0) : "r"(a1), "r"(a2), "r"(a3), "r"(sys_id));
+#else
   asm volatile ("scall"
 		: "+r"(a0) : "r"(a1), "r"(a2), "r"(a3), "r"(sys_id));
+#endif
 
   if (a0 < 0)
     return __syscall_error (a0);
