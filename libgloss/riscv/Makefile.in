@@ -63,7 +63,7 @@ install_libs_dir  = $(DESTDIR)$(prefix)/$(target_alias)/lib${MULTISUBDIR}
 
 CC            := @CC@
 CPPFLAGS      := -I$(obj_dir) -I$(src_dir)
-COMPILE       := $(CC) -MMD -MP $(CPPFLAGS) $(CFLAGS_FOR_TARGET)
+COMPILE       := $(CC) -MMD -MP $(CPPFLAGS) $(CFLAGS_FOR_TARGET) $(CFLAGS)
 
 # Library creation
 
