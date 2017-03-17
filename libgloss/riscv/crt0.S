@@ -13,8 +13,11 @@ _start:
   mv      sp, a0
 
   # Initialize global pointer
+.option push
+.option norelax
 1:auipc gp, %pcrel_hi(__global_pointer$)
   addi  gp, gp, %pcrel_lo(1b)
+.option pop
 
 #ifdef __nds_ex9
 .L_init_itb:
