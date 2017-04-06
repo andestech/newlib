@@ -70,6 +70,9 @@
 #include <string.h>
 #include <unistd.h>
 #include <utime.h>
+#ifdef __riscv_virtual_hosting
+#include "../glue.h"
+#endif
 
 //------------------------------------------------------------------------
 // environment                                                          
@@ -434,6 +437,7 @@ long sysconf(int name)
 // is suggested by the newlib docs and suffices for a standalone
 // system.
 
+#ifndef __riscv_virtual_hosting
 void* sbrk(ptrdiff_t incr)
 {
   static unsigned long heap_end;
@@ -451,6 +455,25 @@ void* sbrk(ptrdiff_t incr)
   heap_end += incr;
   return (void*)(heap_end - incr);
 }
+#else
+void* sbrk(ptrdiff_t incr)
+{
+  static uintptr_t heap_end;
+  if (heap_end == 0) heap_end = (uintptr_t) _end + 1024; // Leave 1024 bytes for low-memory operations
+
+  uintptr_t new_heap_end = (heap_end + incr + 7) & ~0b111; // Align on 8-byte boundary
+
+  register uintptr_t sp asm("sp");
+  if (new_heap_end > sp) { // Check collision with stack pointer
+    errno = ENOMEM;
+    return (void*) -1;
+  }
+
+  uintptr_t old_heap_end = heap_end;
+  heap_end = new_heap_end;
+  return (void*) old_heap_end;
+}
+#endif
 
 //------------------------------------------------------------------------
 // _exit                                                                
