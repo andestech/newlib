@@ -3,6 +3,7 @@
  * machine */
 
 #ifndef	_RISCV_SYS_FCNTL_H_
+#ifdef __riscv_virtual_hosting
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -202,4 +203,8 @@ extern int _open64 _PARAMS ((const char *, int, ...));
 #ifdef __cplusplus
 }
 #endif
+#else
+#include <sys/_default_fcntl.h>
+#endif  /* __riscv_virtual_hosting */
 #endif	/* !_RISCV_SYS_FCNTL_H_ */
+
