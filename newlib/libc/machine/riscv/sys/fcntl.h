@@ -3,7 +3,7 @@
  * machine */
 
 #ifndef	_RISCV_SYS_FCNTL_H_
-#ifdef __riscv_virtual_hosting
+#ifndef __riscv_virtual_hosting
 #ifdef __cplusplus
 extern "C" {
 #endif
