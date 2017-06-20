@@ -16,6 +16,10 @@ _start:
 1:auipc gp, %pcrel_hi(__global_pointer$)
   addi  gp, gp, %pcrel_lo(1b)
 
+.L_init_itb:
+  la      a0, _ITB_BASE_
+  csrrw   x0, itb, a0
+
   # Clear the bss segment
   la      a0, _edata
   la      a2, _end
