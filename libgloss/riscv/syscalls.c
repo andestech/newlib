@@ -149,7 +149,7 @@ ssize_t _read(int file, void *ptr, size_t len)
 //------------------------------------------------------------------------
 // Write to a file.
 
-ssize_t
+__attribute__((weak)) ssize_t
 _write(int file, const void *ptr, size_t len)
 {
   return syscall_errno (SYS_write, file, ptr, len, 0);
@@ -184,7 +184,7 @@ conv_stat (struct stat *st, struct kernel_stat *kst)
 // Status of an open file. The sys/stat.h header file required is
 // distributed in the include subdirectory for this C library.
 
-int
+__attribute__((weak)) int
 _fstat(int file, struct stat *st)
 {
   struct kernel_stat kst;
