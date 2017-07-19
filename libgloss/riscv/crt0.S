@@ -6,6 +6,12 @@
   .global _start
   .type   _start, @function
 _start:
+  .weak   __stack_pointer$
+  # Initialize stack pointer (if defined)
+  lla     a0, __stack_pointer$
+  beqz    a0, 1f
+  mv      sp, a0
+
   # Initialize global pointer
 1:auipc gp, %pcrel_hi(__global_pointer$)
   addi  gp, gp, %pcrel_lo(1b)
