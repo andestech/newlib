@@ -108,7 +108,7 @@ __syscall_error(long a0)
   return -1;
 }
 
-int
+__attribute__((weak)) int
 _open(const char *name, int flags, int mode)
 {
   return syscall_errno (SYS_open, name, flags, mode, 0);
@@ -118,7 +118,7 @@ _open(const char *name, int flags, int mode)
 // openat
 //------------------------------------------------------------------------
 // Open file relative to given directory
-int _openat(int dirfd, const char *name, int flags, int mode)
+__attribute__((weak)) int _openat(int dirfd, const char *name, int flags, int mode)
 {
   return syscall_errno (SYS_openat, dirfd, name, flags, mode);
 }
@@ -128,7 +128,7 @@ int _openat(int dirfd, const char *name, int flags, int mode)
 //------------------------------------------------------------------------
 // Set position in a file.
 
-off_t
+__attribute__((weak)) off_t
 _lseek(int file, off_t ptr, int dir)
 {
   return syscall_errno (SYS_lseek, file, ptr, dir, 0);
@@ -139,7 +139,7 @@ _lseek(int file, off_t ptr, int dir)
 //----------------------------------------------------------------------
 // Read from a file.
 
-ssize_t _read(int file, void *ptr, size_t len)
+__attribute__((weak)) ssize_t _read(int file, void *ptr, size_t len)
 {
   return syscall_errno (SYS_read, file, ptr, len, 0);
 }
@@ -198,7 +198,7 @@ _fstat(int file, struct stat *st)
 //------------------------------------------------------------------------
 // Status of a file (by name).
 
-int
+__attribute__((weak)) int
 _stat(const char *file, struct stat *st)
 {
   struct kernel_stat kst;
@@ -212,7 +212,7 @@ _stat(const char *file, struct stat *st)
 //------------------------------------------------------------------------
 // Status of a link (by name).
 
-int _lstat(const char *file, struct stat *st)
+__attribute__((weak)) int _lstat(const char *file, struct stat *st)
 {
   struct kernel_stat kst;
   int rv = syscall_errno (SYS_lstat, file, &kst, 0, 0);
@@ -225,7 +225,7 @@ int _lstat(const char *file, struct stat *st)
 //------------------------------------------------------------------------
 // Status of a file (by name) in a given directory.
 
-int
+__attribute__((weak)) int
 _fstatat(int dirfd, const char *file, struct stat *st, int flags)
 {
   struct kernel_stat kst;
@@ -239,7 +239,7 @@ _fstatat(int dirfd, const char *file, struct stat *st, int flags)
 //------------------------------------------------------------------------
 // Permissions of a file (by name).
 
-int
+__attribute__((weak)) int
 _access(const char *file, int mode)
 {
   return syscall_errno (SYS_access, file, mode, 0, 0);
@@ -250,7 +250,7 @@ _access(const char *file, int mode)
 //------------------------------------------------------------------------
 // Permissions of a file (by name) in a given directory.
 
-int _faccessat(int dirfd, const char *file, int mode, int flags)
+__attribute__((weak)) int _faccessat(int dirfd, const char *file, int mode, int flags)
 {
   return syscall_errno (SYS_faccessat, dirfd, file, mode, flags);
 }
@@ -260,7 +260,7 @@ int _faccessat(int dirfd, const char *file, int mode, int flags)
 //------------------------------------------------------------------------
 // Close a file.
 
-int
+__attribute__((weak)) int
 _close(int file)
 {
   return syscall_errno (SYS_close, file, 0, 0, 0);
@@ -271,7 +271,7 @@ _close(int file)
 //------------------------------------------------------------------------
 // Establish a new name for an existing file.
 
-int _link(const char *old_name, const char *new_name)
+__attribute__((weak)) int _link(const char *old_name, const char *new_name)
 {
   return syscall_errno (SYS_link, old_name, new_name, 0, 0);
 }
@@ -281,7 +281,7 @@ int _link(const char *old_name, const char *new_name)
 //------------------------------------------------------------------------
 // Remove a file's directory entry.
 
-int
+__attribute__((weak)) int
 _unlink(const char *name)
 {
   return syscall_errno (SYS_unlink, name, 0, 0, 0);
@@ -293,7 +293,7 @@ _unlink(const char *name)
 // Transfer control to a new process. Minimal implementation for a
 // system without processes from newlib documentation.
 
-int
+__attribute__((weak)) int
 _execve(const char *name, char *const argv[], char *const env[])
 {
   errno = ENOMEM;
@@ -306,7 +306,7 @@ _execve(const char *name, char *const argv[], char *const env[])
 // Create a new process. Minimal implementation for a system without
 // processes from newlib documentation.
 
-int _fork()
+__attribute__((weak)) int _fork()
 {
   errno = EAGAIN;
   return -1;
@@ -319,7 +319,7 @@ int _fork()
 // to conflict with other processes. Minimal implementation for a
 // system without processes just returns 1.
 
-int
+__attribute__((weak)) int
 _getpid()
 {
   return 1;
@@ -331,7 +331,7 @@ _getpid()
 // Send a signal. Minimal implementation for a system without processes
 // just causes an error.
 
-int
+__attribute__((weak)) int
 _kill(int pid, int sig)
 {
   errno = EINVAL;
@@ -344,7 +344,7 @@ _kill(int pid, int sig)
 // Wait for a child process. Minimal implementation for a system without
 // processes just causes an error.
 
-int _wait(int *status)
+__attribute__((weak)) int _wait(int *status)
 {
   errno = ECHILD;
   return -1;
@@ -357,7 +357,7 @@ int _wait(int *status)
 // other minimal implementations, which only support output to stdout,
 // this minimal implementation is suggested by the newlib docs.
 
-int
+__attribute__((weak)) int
 _isatty(int file)
 {
   struct stat s;
@@ -381,7 +381,7 @@ _isatty(int file)
 // account for user vs system time, but for now we just return the total
 // number of cycles since starting the program.
 
-clock_t
+__attribute__((weak)) clock_t
 _times(struct tms *buf)
 {
   // when called for the first time, initialize t0
@@ -404,7 +404,7 @@ _times(struct tms *buf)
 //----------------------------------------------------------------------
 // Get the current time.  Only relatively correct.
 
-int
+__attribute__((weak)) int
 _gettimeofday(struct timeval *tp, void *tzp)
 {
   return syscall_errno (SYS_gettimeofday, tp, 0, 0, 0);
@@ -415,7 +415,7 @@ _gettimeofday(struct timeval *tp, void *tzp)
 //----------------------------------------------------------------------
 // Get the current time.  Only relatively correct.
 
-int
+__attribute__((weak)) int
 _ftime(struct timeb *tp)
 {
   tp->time = tp->millitm = 0;
@@ -427,7 +427,7 @@ _ftime(struct timeb *tp)
 //----------------------------------------------------------------------
 // Stub.
 
-int
+__attribute__((weak)) int
 _utime(const char *path, const struct utimbuf *times)
 {
   return -1;
@@ -438,7 +438,7 @@ _utime(const char *path, const struct utimbuf *times)
 //----------------------------------------------------------------------
 // Stub.
 
-int _chown(const char *path, uid_t owner, gid_t group)
+__attribute__((weak)) int _chown(const char *path, uid_t owner, gid_t group)
 {
   return -1;
 }
@@ -448,7 +448,7 @@ int _chown(const char *path, uid_t owner, gid_t group)
 //----------------------------------------------------------------------
 // Stub.
 
-int
+__attribute__((weak)) int
 _chmod(const char *path, mode_t mode)
 {
   return -1;
@@ -459,7 +459,7 @@ _chmod(const char *path, mode_t mode)
 //----------------------------------------------------------------------
 // Stub.
 
-int
+__attribute__((weak)) int
 _chdir(const char *path)
 {
   return -1;
@@ -470,7 +470,7 @@ _chdir(const char *path)
 //----------------------------------------------------------------------
 // Stub.
 
-char *
+__attribute__((weak)) char *
 _getcwd(char *buf, size_t size)
 {
   return NULL;
@@ -481,7 +481,7 @@ _getcwd(char *buf, size_t size)
 //----------------------------------------------------------------------
 // Get configurable system variables
 
-long
+__attribute__((weak)) long
 _sysconf(int name)
 {
   switch (name)
@@ -502,7 +502,7 @@ _sysconf(int name)
 // system.
 
 #ifndef __riscv_virtual_hosting
-void *
+__attribute__((weak)) void *
 _sbrk(ptrdiff_t incr)
 {
   static unsigned long heap_end;
@@ -547,7 +547,7 @@ _sbrk(ptrdiff_t incr)
 //------------------------------------------------------------------------
 // Exit a program without cleaning up files.
 
-void
+__attribute__((weak)) void
 _exit(int exit_status)
 {
   syscall_errno (SYS_exit, exit_status, 0, 0, 0);
