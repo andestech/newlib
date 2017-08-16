@@ -57,7 +57,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <utime.h>
-#ifdef __riscv_virtual_hosting
+#ifndef SBRK_USES_SYSCALL
 #include "../glue.h"
 #endif
 
@@ -501,7 +501,7 @@ _sysconf(int name)
 // is suggested by the newlib docs and suffices for a standalone
 // system.
 
-#ifndef __riscv_virtual_hosting
+#ifdef SBRK_USES_SYSCALL
 __attribute__((weak)) void *
 _sbrk(ptrdiff_t incr)
 {
