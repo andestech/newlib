@@ -62,7 +62,7 @@ __internal_syscall(long n, long _a0, long _a1, long _a2, long _a3)
 #ifdef __riscv_virtual_hosting
   sys_id = (sys_id << 16) | sys_id;
   asm volatile ("sbreak"
-		: "+r"(a0) : "r"(a1), "r"(a2), "r"(a3), "r"(sys_id));
+		: "+r"(a0), "+r"(sys_id) : "r"(a1), "r"(a2), "r"(a3));
 #else
   asm volatile ("scall"
 		: "+r"(a0) : "r"(a1), "r"(a2), "r"(a3), "r"(sys_id));
