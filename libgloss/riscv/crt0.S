@@ -16,7 +16,7 @@ _start:
 1:auipc gp, %pcrel_hi(__global_pointer$)
   addi  gp, gp, %pcrel_lo(1b)
 
-#ifdef __riscv_ex9
+#ifdef __nds_ex9
 .L_init_itb:
   la      a0, _ITB_BASE_
   csrrw   x0, uitb, a0
