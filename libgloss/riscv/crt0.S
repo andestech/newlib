@@ -19,7 +19,7 @@ _start:
 #ifdef __riscv_ex9
 .L_init_itb:
   la      a0, _ITB_BASE_
-  csrrw   x0, itb, a0
+  csrrw   x0, uitb, a0
 #endif
 
   # Clear the bss segment
