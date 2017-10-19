@@ -50,7 +50,6 @@ setjmp:
   .globl  longjmp
   .type   longjmp, @function
 longjmp:
-	REG_L ra,  0*SZREG(a0)
 	REG_L s0,  1*SZREG(a0)
 	REG_L s1,  2*SZREG(a0)
 
@@ -87,6 +86,10 @@ longjmp:
 	FREG_L fs10,14*SZREG+10*SZFREG(a0)
 	FREG_L fs11,14*SZREG+11*SZFREG(a0)
 #endif
+        # ra cannot be restored in the first instruction of longjmp as it
+        # causes a gdb test case to fail, so we store it at last.
+        # See bugzilla #14296
+	REG_L ra,  0*SZREG(a0)
 
 	seqz a0, a1
 	add  a0, a0, a1   # a0 = (a1 == 0) ? 1 : a1
