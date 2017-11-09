@@ -526,7 +526,7 @@ void *
 _sbrk(ptrdiff_t incr)
 {
   static uintptr_t heap_end;
-  if (heap_end == 0) heap_end = (uintptr_t) _end + 1024; // Leave 1024 bytes for low-memory operations
+  if (heap_end == 0) heap_end = (uintptr_t) _end;
 
   uintptr_t new_heap_end = heap_end + incr;
 
