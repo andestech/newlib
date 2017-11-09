@@ -528,7 +528,7 @@ _sbrk(ptrdiff_t incr)
   static uintptr_t heap_end;
   if (heap_end == 0) heap_end = (uintptr_t) _end + 1024; // Leave 1024 bytes for low-memory operations
 
-  uintptr_t new_heap_end = (heap_end + incr + 7) & ~0b111; // Align on 8-byte boundary
+  uintptr_t new_heap_end = heap_end + incr;
 
   register uintptr_t sp asm("sp");
   if (new_heap_end > sp) { // Check collision with stack pointer
