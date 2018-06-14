@@ -25,6 +25,12 @@ _start:
   csrrw   x0, uitb, a0
 #endif
 
+  # Set mstatus.fs to 1 (initial)
+#ifdef __riscv_flen
+  li      a0, (1 << 13)
+  csrs    mstatus, a0
+#endif
+
   # Clear the bss segment
   la      a0, _edata
   la      a2, _end
