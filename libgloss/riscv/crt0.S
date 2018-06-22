@@ -31,6 +31,10 @@ _start:
   csrs    mstatus, a0
 #endif
 
+  # Enable unaligned memory access (mmisc_ctl.UNA)
+  li      a0, (1 << 6)
+  csrs    mmisc_ctl, a0
+
   # Clear the bss segment
   la      a0, _edata
   la      a2, _end
