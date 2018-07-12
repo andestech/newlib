@@ -46,8 +46,8 @@ _start:
   call    atexit                  #  to be called upon exit
   call    __libc_init_array       # Run global initialization functions
 
-  lw      a0, 0(sp)                  # a0 = argc
-  addi    a1, sp, __SIZEOF_POINTER__ # a1 = argv
+  li      a0, 0                      # a0 = argc = 0
+  li      a1, 0                      # a1 = argv = NULL
   li      a2, 0                      # a2 = envp = NULL
   call    main
   tail    exit
