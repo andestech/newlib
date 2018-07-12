@@ -553,3 +553,14 @@ _exit(int exit_status)
   syscall_errno (SYS_exit, exit_status, 0, 0, 0);
   while (1);
 }
+
+//------------------------------------------------------------------------
+// _rename
+//------------------------------------------------------------------------
+// Rename a file.
+
+__attribute__((weak)) int
+_rename(const char* oldpath, const char* newpath)
+{
+  return syscall_errno (SYS_rename, oldpath, newpath, 0, 0);
+}

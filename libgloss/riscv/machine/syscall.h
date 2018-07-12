@@ -42,6 +42,7 @@
 #define SYS_fcntl 25
 #define SYS_getdents 61
 #define SYS_dup 23
+#define SYS_rename 1034
 
 extern long __syscall_error(long);
 
