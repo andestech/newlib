@@ -209,7 +209,9 @@
 #ifdef __riscv
 #define __IEEE_LITTLE_ENDIAN
 #define __OBSOLETE_MATH_DEFAULT 0
+#ifdef __FP_FAST_FMA
 #define __HAVE_FAST_FMA_DEFAULT 1
+#endif
 #endif
 
 #ifdef __i960__
