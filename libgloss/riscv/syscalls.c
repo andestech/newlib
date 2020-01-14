@@ -57,9 +57,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <utime.h>
-#ifndef SBRK_USES_SYSCALL
-#include "../glue.h"
-#endif
 
 //------------------------------------------------------------------------
 // environment
@@ -446,28 +443,9 @@ _sysconf(int name)
 // is suggested by the newlib docs and suffices for a standalone
 // system.
 
-#ifdef SBRK_USES_SYSCALL
+extern char _end[];
+
 __attribute__((weak)) void *
-_sbrk(ptrdiff_t incr)
-{
-  static unsigned long heap_end;
-
-  if (heap_end == 0)
-    {
-      long brk = syscall_errno (SYS_brk, 0, 0, 0, 0);
-      if (brk == -1)
-	return (void *)-1;
-      heap_end = brk;
-    }
-
-  if (syscall_errno (SYS_brk, heap_end + incr, 0, 0, 0) != heap_end + incr)
-    return (void *)-1;
-
-  heap_end += incr;
-  return (void *)(heap_end - incr);
-}
-#else
-void *
 _sbrk(ptrdiff_t incr)
 {
   static uintptr_t heap_end;
@@ -485,7 +463,6 @@ _sbrk(ptrdiff_t incr)
   heap_end = new_heap_end;
   return (void*) old_heap_end;
 }
-#endif
 
 //------------------------------------------------------------------------
 // _exit
