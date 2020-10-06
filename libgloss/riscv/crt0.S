@@ -19,7 +19,7 @@ _start:
   addi  gp, gp, %pcrel_lo(1b)
 .option pop
 
-#ifdef __nds_execit
+#ifdef __nds_v5
 .L_init_itb:
   la      a0, _ITB_BASE_
   csrrw   x0, uitb, a0
