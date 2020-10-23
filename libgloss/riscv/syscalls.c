@@ -454,6 +454,7 @@ _sbrk(ptrdiff_t incr)
   uintptr_t new_heap_end = heap_end + incr;
 
   register uintptr_t sp asm("sp");
+  asm("" : "=r" (sp));
   if (new_heap_end > sp) { // Check collision with stack pointer
     errno = ENOMEM;
     return (void*) -1;
