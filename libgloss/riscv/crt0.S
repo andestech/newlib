@@ -19,11 +19,21 @@ _start:
   addi  gp, gp, %pcrel_lo(1b)
 .option pop
 
-#ifdef __nds_ex9
+#ifdef __nds_execit
 .L_init_itb:
   la      a0, _ITB_BASE_
   csrrw   x0, uitb, a0
 #endif
+
+  # Set mstatus.fs to 1 (initial)
+#ifdef __riscv_flen
+  li      a0, (1 << 13)
+  csrs    mstatus, a0
+#endif
+
+  # Enable unaligned memory access (mmisc_ctl.UNA)
+  li      a0, (1 << 6)
+  csrs    mmisc_ctl, a0
 
   # Clear the bss segment
   la      a0, _edata
@@ -36,8 +46,8 @@ _start:
   call    atexit                  #  to be called upon exit
   call    __libc_init_array       # Run global initialization functions
 
-  lw      a0, 0(sp)                  # a0 = argc
-  addi    a1, sp, __SIZEOF_POINTER__ # a1 = argv
+  li      a0, 0                      # a0 = argc = 0
+  li      a1, 0                      # a1 = argv = NULL
   li      a2, 0                      # a2 = envp = NULL
   call    main
   tail    exit

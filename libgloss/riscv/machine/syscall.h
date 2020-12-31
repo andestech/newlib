@@ -42,6 +42,7 @@
 #define SYS_fcntl 25
 #define SYS_getdents 61
 #define SYS_dup 23
+#define SYS_rename 1034
 
 extern long __syscall_error(long);
 
@@ -60,9 +61,19 @@ __internal_syscall(long n, long _a0, long _a1, long _a2, long _a3)
 #endif
 
 #ifdef __riscv_virtual_hosting
-  sys_id = (sys_id << 16) | sys_id;
-  asm volatile ("sbreak"
-		: "+r"(a0), "+r"(sys_id) : "r"(a1), "r"(a2), "r"(a3));
+  asm volatile (
+    ".option push\n\t"
+    ".option norvc\n\t"
+    "slli x0, x0, 0x1f\n\t"
+    "ebreak\n\t"
+#if __riscv_32e
+    "srai x0, x0, 0x15\n\t"
+#else
+    "srai x0, x0, 0x5\n\t"
+#endif
+    ".option pop"
+    : "+r"(a0)
+    : "r"(a1), "r"(a2), "r"(a3), "r"(sys_id));
 #else
   asm volatile ("scall"
 		: "+r"(a0) : "r"(a1), "r"(a2), "r"(a3), "r"(sys_id));
