@@ -32,8 +32,10 @@ _start:
 #endif
 
   # Enable unaligned memory access (mmisc_ctl.UNA)
+#ifdef __nds_v5
   li      a0, (1 << 6)
   csrs    mmisc_ctl, a0
+#endif
 
   # Clear the bss segment
   la      a0, _edata
