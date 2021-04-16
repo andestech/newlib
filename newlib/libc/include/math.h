@@ -578,6 +578,10 @@ extern int *__signgam _PARAMS((void));
 #define __signgam_r(ptr) _REENT_SIGNGAM(ptr)
 #endif /* __MISC_VISIBLE || __XSI_VISIBLE */
 
+#ifdef __riscv
+extern long double copysignl _PARAMS((long double, long double));
+#endif
+
 #if __SVID_VISIBLE
 /* The exception structure passed to the matherr routine.  */
 /* We have a problem when using C++ since `exception' is a reserved

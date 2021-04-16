@@ -92,6 +92,13 @@ objs += $(gloss_c_objs)
 deps += $(gloss_c_deps)
 junk += $(gloss_c_deps) $(gloss_c_objs)
 
+gloss_c_vh_objs = $(patsubst %.c, %_vh.o, $(notdir $(gloss_c_srcs)))
+
+%_vh.o : %.c
+	$(COMPILE) -o $@ -c -mvh $<
+
+vh_objs += $(gloss_c_vh_objs)
+
 #-------------------------------------------------------------------------
 # Build Object Files from Assembly Source
 #-------------------------------------------------------------------------
@@ -118,8 +125,15 @@ $(gloss_lib) : $(objs)
 
 junk += $(gloss_libs)
 
+gloss_vh_lib  = libgloss_vh.a
+$(gloss_vh_lib) : $(vh_objs)
+	$(AR) rcv $@ $^
+	$(RANLIB) $@
+
+junk += $(gloss_vh_lib)
+
 install_hdrs += $(gloss_hdrs)
-install_libs += $(gloss_lib)
+install_libs += $(gloss_lib) $(gloss_vh_lib)
 
 #-------------------------------------------------------------------------
 # Build crt0.o
