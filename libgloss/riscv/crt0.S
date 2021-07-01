@@ -31,6 +31,10 @@ _start:
   csrs    mstatus, a0
 #endif
 
+  # Set mstatus.vs to 1 (initial)
+  li      a0, (1 << 10)
+  csrs    mstatus, a0
+
   # Enable unaligned memory access (mmisc_ctl.UNA)
 #ifdef __nds_v5
   li      a0, (1 << 6)
