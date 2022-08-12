@@ -20,10 +20,12 @@ _start:
 .option pop
 
 #ifdef __nds_v5
-.L_init_itb:
+  csrr    a0, mmsc_cfg
+  bbc     a0, 3, 1f
   la      a0, _ITB_BASE_
   csrrw   x0, uitb, a0
 #endif
+1:
 
   # Set mstatus.fs to 1 (initial)
 #ifdef __riscv_flen
