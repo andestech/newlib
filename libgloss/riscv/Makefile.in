@@ -12,7 +12,6 @@ gloss_srcs = \
 	sys_chmod.c \
 	sys_chown.c \
 	sys_close.c \
-	sys_conv_stat.c \
 	sys_execve.c \
 	sys_exit.c \
 	sys_faccessat.c \
@@ -38,7 +37,8 @@ gloss_srcs = \
 	sys_unlink.c \
 	sys_utime.c \
 	sys_wait.c \
-	sys_write.c 
+	sys_write.c \
+	sys_rename.c
 
 # libsemihost reuses some of the libgloss minimal implementations
 
@@ -54,21 +54,43 @@ semihost_srcs = \
 	sys_kill.c \
 	sys_utime.c \
 	sys_wait.c \
+	semihost-clock.c \
+	semihost-close.c \
+	semihost-errno.c \
+	semihost-exit_extended.c \
+	semihost-exit.c \
+	semihost-flen.c \
+	semihost-get_cmdline.c \
+	semihost-iserror.c \
+	semihost-istty.c \
+	semihost-open.c \
+	semihost-putc.c \
+	semihost-read.c \
+	semihost-remove.c \
+	semihost-rename.c \
+	semihost-seek.c \
 	semihost-sys_close.c \
 	semihost-sys_exit.c \
 	semihost-sys_fdtable.c \
 	semihost-sys_fstat.c \
 	semihost-sys_ftime.c \
+	semihost-sys_gettimeofday.c \
 	semihost-sys_isatty.c \
 	semihost-sys_link.c \
 	semihost-sys_lseek.c \
 	semihost-sys_open.c \
 	semihost-sys_read.c \
+	semihost-sys_rename.c \
 	semihost-sys_sbrk.c \
 	semihost-sys_stat.c \
 	semihost-sys_stat_common.c \
+	semihost-sys_times.c \
 	semihost-sys_unlink.c \
-	semihost-sys_write.c
+	semihost-sys_write.c \
+	semihost-system.c \
+	semihost-time.c \
+	semihost-write.c \
+	semihost-write0.c
 
 gloss_specs = \
 	nano.specs sim.specs semihost.specs
@@ -125,9 +147,8 @@ install_libs_dir  = $(DESTDIR)$(prefix)/$(target_alias)/lib${MULTISUBDIR}
 # C compiler
 
 CC            := @CC@
-CFLAGS        := @CFLAGS@
 CPPFLAGS      := -I$(obj_dir) -I$(src_dir)
-COMPILE       := $(CC) -MMD -MP $(CPPFLAGS) $(CFLAGS)
+COMPILE       := $(CC) -MMD -MP $(CPPFLAGS) $(CFLAGS_FOR_TARGET) $(CFLAGS)
 
 # Library creation
 
@@ -154,6 +175,13 @@ gloss_objs += $(gloss_c_objs)
 deps += $(gloss_c_deps)
 junk += $(gloss_c_deps) $(gloss_c_objs)
 
+gloss_c_vh_objs = $(patsubst %.c, %_vh.o, $(notdir $(gloss_c_srcs)))
+
+%_vh.o : %.c
+	$(COMPILE) -o $@ -c -mvh $<
+
+vh_objs += $(gloss_c_vh_objs)
+
 sim_c_objs = $(patsubst %.c, sim-%.o, $(notdir $(gloss_c_srcs)))
 sim_c_deps = $(patsubst %.c, sim-%.d, $(notdir $(gloss_c_srcs)))
 
@@ -169,7 +197,7 @@ semihost_c_objs = $(patsubst %.c, semihost-%.o, $(notdir $(semihost_c_srcs)))
 semihost_c_deps = $(patsubst %.c, semihost-%.d, $(notdir $(semihost_c_srcs)))
 
 $(semihost_c_objs): semihost-%.o : %.c
-	$(COMPILE) -c -o $@ $<
+	$(COMPILE) -c -mvh -o $@ $<
 
 semihost_objs += $(semihost_c_objs)
 deps += $(semihost_c_deps)
@@ -204,7 +232,7 @@ semihost_asm_objs = $(patsubst %.S, semihost-%.o, $(notdir $(gloss_asm_srcs)))
 semihost_asm_deps = $(patsubst %.S, semihost-%.d, $(notdir $(gloss_asm_srcs)))
 
 $(semihost_asm_objs) : semihost-%.o : %.S
-	$(COMPILE) -c -DUSING_SEMIHOST_SPECS -o $@ $<
+	$(COMPILE) -c -mvh -DUSING_SEMIHOST_SPECS -o $@ $<
 
 semihost_objs += $(semihost_asm_objs)
 deps += $(semihost_asm_deps)
@@ -220,6 +248,13 @@ $(gloss_lib) : $(gloss_objs)
 	$(RANLIB) $@
 
 junk += $(gloss_lib)
+
+# gloss_vh_lib  = libgloss_vh.a
+# $(gloss_vh_lib) : $(vh_objs)
+# 	$(AR) rcv $@ $^
+# 	$(RANLIB) $@
+
+# junk += $(gloss_vh_lib)
 
 install_hdrs += $(gloss_hdrs)
 install_libs += $(gloss_lib)
@@ -242,7 +277,7 @@ install_libs += $(sim_lib)
 # Build libsemihost.a
 #-------------------------------------------------------------------------
 
-semihost_lib  = libsemihost.a
+semihost_lib  = libgloss_vh.a
 $(semihost_lib) : $(semihost_objs)
 	$(AR) rcv $@ $^
 	$(RANLIB) $@

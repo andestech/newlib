@@ -204,6 +204,9 @@
 #else
 #define __IEEE_LITTLE_ENDIAN
 #endif
+#if __riscv_flen != 32
+#define __OBSOLETE_MATH_DEFAULT 0
+#endif
 #ifdef __riscv_flen
 # define _SUPPORTS_ERREXCEPT
 #endif

@@ -12,7 +12,7 @@
 extern int errno;
 
 /* Set position in a file.  */
-off_t
+__attribute__((weak)) off_t
 _lseek (int file, off_t offset, int dir)
 {
   long data_block[2];

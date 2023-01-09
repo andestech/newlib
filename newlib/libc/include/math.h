@@ -589,6 +589,10 @@ extern int *__signgam (void);
 #define __signgam_r(ptr) _REENT_SIGNGAM(ptr)
 #endif /* __MISC_VISIBLE || __XSI_VISIBLE */
 
+#ifdef __riscv
+extern long double copysignl (long double, long double);
+#endif
+
 /* Useful constants.  */
 
 #if __BSD_VISIBLE || __XSI_VISIBLE

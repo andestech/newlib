@@ -128,7 +128,6 @@ double complex clog10(double complex);
 float complex clog10f(float complex);
 #endif
 
-#if defined(__CYGWIN__)
 long double complex cacosl(long double complex);
 long double complex ccosl(long double complex);
 long double complex csinl(long double complex);
@@ -146,7 +145,6 @@ long double complex cprojl(long double complex);
 #if __GNU_VISIBLE
 long double complex clog10l(long double complex);
 #endif
-#endif /* __CYGWIN__ */
 
 __END_DECLS
 

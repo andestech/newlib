@@ -7,7 +7,7 @@
 #include <string.h>
 
 /* Remove a file's directory entry.  */
-int
+__attribute__((weak)) int
 _unlink (const char *name)
 {
   long data_block[] = {(long) name, strlen (name)};

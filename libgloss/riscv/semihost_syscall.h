@@ -2,9 +2,12 @@
  * Copyright (C) 2020 Embecosm Limited
  * SPDX-License-Identifier: BSD-2-Clause
  */
+#include <stdint.h>
+
 #ifndef _INTERNAL_SYSCALL_H
 #define _INTERNAL_SYSCALL_H
 
+typedef uintptr_t sh_param_t;
 extern int errno;
 
 static inline long
