@@ -208,9 +208,7 @@
 
 #ifdef __riscv
 #define __IEEE_LITTLE_ENDIAN
-#if __riscv_flen != 32
 #define __OBSOLETE_MATH_DEFAULT 0
-#endif
 #ifdef __FP_FAST_FMA
 #define __HAVE_FAST_FMA_DEFAULT 1
 #endif
