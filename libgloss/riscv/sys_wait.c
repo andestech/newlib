@@ -3,6 +3,7 @@
 
 /* Wait for a child process. Minimal implementation for a system without
    processes just causes an error.  */
+__attribute__((weak))
 int _wait(int *status)
 {
   errno = ECHILD;

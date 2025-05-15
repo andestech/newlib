@@ -3,6 +3,7 @@
 
 /* Transfer control to a new process. Minimal implementation for a
    system without processes from newlib documentation.  */
+__attribute__((weak))
 int
 _execve(const char *name, char *const argv[], char *const env[])
 {

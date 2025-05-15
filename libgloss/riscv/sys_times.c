@@ -18,6 +18,7 @@ extern int _gettimeofday(struct timeval *, void *);
    children's times to zero. Eventually we might want to separately
    account for user vs system time, but for now we just return the total
    number of cycles since starting the program.  */
+__attribute__((weak))
 clock_t
 _times(struct tms *buf)
 {

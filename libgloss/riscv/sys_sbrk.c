@@ -34,23 +34,27 @@ _sbrk (nbytes)
    on this, it is useful to have a working implementation. The following
    is suggested by the newlib docs and suffices for a standalone
    system.  */
+
+extern char _end[];
+
+__attribute__((weak))
 void *
 _sbrk(ptrdiff_t incr)
 {
-  static unsigned long heap_end;
+  static uintptr_t heap_end;
+  if (heap_end == 0) heap_end = (uintptr_t) _end;
 
-  if (heap_end == 0)
-    {
-      long brk = __internal_syscall (SYS_brk, 1, 0, 0, 0, 0, 0, 0);
-      if (brk == -1)
-        return (void *)__syscall_error (-ENOMEM);
-      heap_end = brk;
-    }
+  uintptr_t new_heap_end = heap_end + incr;
 
-  if (__internal_syscall (SYS_brk, 1, heap_end + incr, 0, 0, 0, 0, 0) != heap_end + incr)
-    return (void *)__syscall_error (-ENOMEM);
+  register uintptr_t sp asm("sp");
+  asm("" : "=r" (sp));
+  if (new_heap_end > sp) { // Check collision with stack pointer
+    errno = ENOMEM;
+    return (void*) -1;
+  }
 
-  heap_end += incr;
-  return (void *)(heap_end - incr);
+  uintptr_t old_heap_end = heap_end;
+  heap_end = new_heap_end;
+  return (void*) old_heap_end;
 }
 #endif

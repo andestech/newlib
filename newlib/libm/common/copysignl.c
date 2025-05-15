@@ -31,8 +31,14 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <math.h>
 #include "local.h"
 
+#ifdef __riscv
+long double
+copysignl (long double x, long double y)
+{
+  return __builtin_copysignl(x, y);
+}
 /* On platforms where long double is as wide as double.  */
-#ifdef _LDBL_EQ_DBL
+#elif _LDBL_EQ_DBL
 long double
 copysignl (long double x, long double y)
 {

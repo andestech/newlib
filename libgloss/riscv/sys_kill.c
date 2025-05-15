@@ -3,6 +3,7 @@
 
 /* Send a signal. Minimal implementation for a system without processes
    just causes an error.  */
+__attribute__((weak))
 int
 _kill(int pid, int sig)
 {

@@ -8,16 +8,10 @@
 #define ADP_Stopped_ApplicationExit 0x20026
 
 /* Exit a program without cleaning up files.  */
-void
+__attribute__((weak, noreturn)) void
 _exit (int exit_status)
 {
-#if __riscv_xlen == 32
-  syscall_errno (SEMIHOST_exit, (long *) ADP_Stopped_ApplicationExit);
-#else
-  /* The semihosting exit operation only allows 64-bit targets to report the
-     exit code.  */
   long data_block[] = {ADP_Stopped_ApplicationExit, exit_status};
-  syscall_errno (SEMIHOST_exit, data_block);
-#endif
+  syscall_errno (SEMIHOST_exit_extended, data_block);
   while (1);
 }

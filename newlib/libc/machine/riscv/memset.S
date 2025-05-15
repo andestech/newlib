@@ -63,6 +63,7 @@ memset:
   add a3, a3, t0
 .option push
 .option norvc
+.option arch, -zcb
 .Ltable_misaligned:
   jr a3, %pcrel_lo(1b)
 .Ltable:

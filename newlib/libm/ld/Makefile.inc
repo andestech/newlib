@@ -45,7 +45,7 @@
 	%D%/s_tanl.c \
 	%D%/s_truncl.c
 
-libm_a_CFLAGS_%C% = -fbuiltin -fno-math-errno
+libm_a_CFLAGS_%C% = -fno-math-errno
 
 if HAVE_LONG_DOUBLE
 libm_a_SOURCES += $(%C%_lsrc)

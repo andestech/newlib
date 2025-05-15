@@ -105,7 +105,7 @@ P6 = -1.66666666666666666666696142372698408e-1L,	/* -0x15555555555555555567267a5
 P7 =  1.42857142857142857119522943477166120e-1L,	/*  0x1249249249249248ed79a0ae434de.0p-115L */
 P8 = -1.24999999999999994863289015033581301e-1L;	/* -0x1fffffffffffffa13e91765e46140.0p-116L */
 /* Double precision gives ~ 53 + log2(P9 * max(|d|)**8) ~= 120 bits. */
-static const double
+static const long double
 P9 =  1.1111111111111401e-1,		/*  0x1c71c71c71c7ed.0p-56 */
 P10 = -1.0000000000040135e-1,		/* -0x199999999a0a92.0p-56 */
 P11 =  9.0909090728136258e-2,		/*  0x1745d173962111.0p-56 */
@@ -113,7 +113,7 @@ P12 = -8.3333318851855284e-2,		/* -0x1555551722c7a3.0p-56 */
 P13 =  7.6928634666404178e-2,		/*  0x13b1985204a4ae.0p-56 */
 P14 = -7.1626810078462499e-2;		/* -0x12562276cdc5d0.0p-56 */
 
-static volatile const double zero = 0;
+static volatile const long double zero = 0;
 
 #define	INTERVALS	128
 #define	LOG2_INTERVALS	7
@@ -455,7 +455,7 @@ logl(long double x)
 #endif
 {
 	long double d, val_hi, val_lo;
-	double dd, dk;
+	long double dd, dk;
 	uint64_t lx, llx;
 	int i, k;
 	uint16_t hx;
@@ -512,7 +512,7 @@ logl(long double x)
 		d = (x - H(i)) * G(i) + E(i);
 #else
 		long double x_hi;
-		double x_lo;
+		long double x_lo;
 
 		/*
 		 * Split x into x_hi + x_lo to calculate x*G(i)-1 exactly.
@@ -548,7 +548,7 @@ logl(long double x)
 	 * being exact, and this gives a good place to sum the 'lo'
 	 * term too.
 	 */
-	dd = (double)d;
+	dd = d;
 	val_lo = d * d * d * (P3 +
 	    d * (P4 + d * (P5 + d * (P6 + d * (P7 + d * (P8 +
 	    dd * (P9 + dd * (P10 + dd * (P11 + dd * (P12 + dd * (P13 +
@@ -568,7 +568,7 @@ log1pl(long double x)
 {
 	long double d, d_hi, f_lo, val_hi, val_lo;
 	long double f_hi, twopminusk;
-	double d_lo, dd, dk;
+	long double d_lo, dd, dk;
 	uint64_t lx, llx;
 	int i, k;
 	int16_t ax, hx;
@@ -630,7 +630,7 @@ log1pl(long double x)
 		d_hi = (x - H(i)) * G(i) + E(i);
 #else
 		long double x_hi;
-		double x_lo;
+		long double x_lo;
 
 		INSERT_LDBL128_WORDS(x_hi, 0x3fff, lx,
 		    llx & 0xffffffffff000000ULL);
@@ -657,7 +657,7 @@ log1pl(long double x)
 	d_lo = d_hi - d + d_lo;
 	d_hi = d;
 
-	dd = (double)d;
+	dd = d;
 	val_lo = d * d * d * (P3 +
 	    d * (P4 + d * (P5 + d * (P6 + d * (P7 + d * (P8 +
 	    dd * (P9 + dd * (P10 + dd * (P11 + dd * (P12 + dd * (P13 +
@@ -692,7 +692,7 @@ logl(long double x)
  * without any explicit conversions.  More natural choices would require a
  * slow long double precision multiplication.
  */
-static const double
+static const long double
 invln10_hi =  4.3429448176175356e-1,		/*  0x1bcb7b15000000.0p-54 */
 invln2_hi =  1.4426950402557850e0;		/*  0x17154765000000.0p-52 */
 static const long double

@@ -7,7 +7,7 @@
 #include "semihost_fdtable.h"
 
 /* Close a file.  */
-int
+__attribute__((weak)) int
 _close (int file)
 {
   long res;

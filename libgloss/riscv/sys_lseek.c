@@ -3,6 +3,7 @@
 #include "internal_syscall.h"
 
 /* Set position in a file.  */
+__attribute__((weak))
 off_t
 _lseek(int file, off_t ptr, int dir)
 {

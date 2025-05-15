@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: BSD-2-Clause
  */
 /* Establish a new name for an existing file.  */
+
+__attribute__((weak))
 int _link (const char *old_name, const char *new_name)
 {
   return -1;

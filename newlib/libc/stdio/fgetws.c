@@ -119,6 +119,16 @@ _fgetws_r (struct _reent *ptr,
       goto error;
     }
 
+  // Correctly handle the situation when the number of read words is 1
+  if (n == 1)
+    {
+      /* Another irregular case: since we have to store a NUL byte and
+      there is only room for exactly one byte, we don't have to
+      read anything.  */
+      ws[0] = L'\0';
+      return ws;
+    }  
+
   if (fp->_r <= 0 && __srefill_r (ptr, fp))
     /* EOF */
     goto error;

@@ -2,6 +2,7 @@
 #include "internal_syscall.h"
 
 /* Close a file.  */
+__attribute__((weak))
 int
 _close(int file)
 {

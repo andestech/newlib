@@ -141,7 +141,8 @@ _fwrite_r (struct _reent * ptr,
   if (__sfvwrite_r (ptr, fp, &uio) == 0)
     {
       _newlib_flockfile_exit (fp);
-      return count;
+      return size? count:0; // Correctly handle the case when size is 0
+      //return count;
     }
   _newlib_flockfile_end (fp);
   return (n - uio.uio_resid) / size;

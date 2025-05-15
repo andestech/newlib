@@ -4906,7 +4906,7 @@ libm_a_CFLAGS_libm_common = -fbuiltin -fno-math-errno
 @HAVE_FPMATH_H_TRUE@	libm/ld/s_tanl.c \
 @HAVE_FPMATH_H_TRUE@	libm/ld/s_truncl.c
 
-@HAVE_FPMATH_H_TRUE@libm_a_CFLAGS_libm_ld = -fbuiltin -fno-math-errno
+@HAVE_FPMATH_H_TRUE@libm_a_CFLAGS_libm_ld = -fno-math-errno
 libm_complex_src = \
 	libm/complex/cabs.c libm/complex/cacos.c libm/complex/cacosh.c libm/complex/carg.c libm/complex/casin.c libm/complex/casinh.c \
 	libm/complex/catan.c libm/complex/catanh.c libm/complex/ccos.c libm/complex/ccosh.c libm/complex/cephes_subr.c \

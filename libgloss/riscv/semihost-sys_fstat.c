@@ -9,7 +9,7 @@
 /* Status of an open file.  The sys/stat.h header file required is
    distributed in the include subdirectory for this C library.  */
 
-int
+__attribute__((weak)) int
 _fstat (int file, struct stat *st)
 {
   /* Initialize st as not all fields will be set.  */

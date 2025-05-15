@@ -31,6 +31,7 @@
 #include <float.h>
 #include <errno.h>
 #include <assert.h>
+#include <stdio.h>
 #include <sys/config.h>
 #include <sys/types.h>
 #include "../locale/setlocale.h"
@@ -343,8 +344,10 @@ typedef struct _Bigint _Bigint;
 
 #define eBalloc(__reent_ptr, __len) ({ \
    void *__ptr = Balloc(__reent_ptr, __len); \
-   if (__ptr == NULL) \
-     __assert_func(__FILE__, __LINE__, (char *)0, "Balloc succeeded"); \
+   if (__ptr == NULL) { \
+     fputs("Balloc failed", stderr); \
+     abort(); \
+   } \
    __ptr; \
    })
    

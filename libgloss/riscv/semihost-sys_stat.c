@@ -8,8 +8,7 @@
 #include "semihost_stat.h"
 
 /* Status of a file (by name).  */
-
-int
+__attribute__((weak)) int
 _stat (const char *name, struct stat *st)
 {
   int file;

@@ -5,6 +5,7 @@
 #include "semihost_fdtable.h"
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <unistd.h>
 
 #ifndef RISCV_MAX_OPEN_FILES
@@ -13,6 +14,7 @@
 
 extern int errno;
 extern int _open (const char *, int, ...);
+static bool _check_done;
 
 /* fdtable keeps track of the position of each file and is used to map stdin,
    stdout and stderr to STDIN_FILENO, STDOUT_FILENO and STDERR_FILENO.  */
@@ -21,28 +23,28 @@ static struct fdentry fdtable[RISCV_MAX_OPEN_FILES];
 
 /* Initialize fdtable.  A handle of -1 denotes an empty entry.  */
 
-void __attribute__ ((constructor))
+void
 init_semihosting ()
 {
-  int handle;
+  int i;
 
-  for (int i=0; i<RISCV_MAX_OPEN_FILES; i++)
+  for (i=0; i<RISCV_MAX_OPEN_FILES; i++)
     fdtable[i].handle = -1;
 
   /* Set up std streams.  */
   /* stdin.  */
-  handle = _open (":tt", O_RDONLY);
-  fdtable[STDIN_FILENO].handle = handle;
+  i = _open (":tt", O_RDONLY);
+  fdtable[STDIN_FILENO].handle = fdtable[i].handle;
   fdtable[STDIN_FILENO].pos = 0;
 
   /* stdout.  */
-  handle = _open (":tt", O_WRONLY|O_CREAT|O_TRUNC);
-  fdtable[STDOUT_FILENO].handle = handle;
+  i = _open (":tt", O_WRONLY|O_CREAT|O_TRUNC);
+  fdtable[STDOUT_FILENO].handle = fdtable[i].handle;
   fdtable[STDOUT_FILENO].pos = 0;
 
   /* stderr.  */
-  handle = _open (":tt", O_WRONLY|O_CREAT|O_APPEND);
-  fdtable[STDERR_FILENO].handle = handle;
+  i = _open (":tt", O_WRONLY|O_CREAT|O_APPEND);
+  fdtable[STDERR_FILENO].handle = fdtable[i].handle;
   fdtable[STDERR_FILENO].pos = 0;
 }
 
@@ -51,6 +53,11 @@ init_semihosting ()
 int
 __add_fdentry (int handle)
 {
+  if (!_check_done)
+    {
+      _check_done = true;
+      init_semihosting ();
+    }
   for (int i=0; i<RISCV_MAX_OPEN_FILES; i++)
     if (fdtable[i].handle == -1)
       {
@@ -68,6 +75,11 @@ __add_fdentry (int handle)
 struct fdentry *
 __get_fdentry (int file)
 {
+  if (!_check_done)
+    {
+      _check_done = true;
+      init_semihosting ();
+    }
   if (file<0 || file>=RISCV_MAX_OPEN_FILES || fdtable[file].handle == -1)
     {
       errno = EBADF;
