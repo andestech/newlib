@@ -103,8 +103,12 @@ _fgets_r (struct _reent * ptr,
   char *s;
   unsigned char *p, *t;
 
-  if (n < 2)			/* sanity check */
+  if (n <= 0)
+    return 0;                   // glibc sanity check
+  /*
+  if (n < 2)			// sanity check 
     return 0;
+  */
 
   s = buf;
 

@@ -182,7 +182,7 @@ typedef void *_iconv_t;
 typedef	_CLOCK_T_	__clock_t;
 
 #if defined(_USE_LONG_TIME_T) || __LONG_MAX__ > 0x7fffffffL
-#define	_TIME_T_ long
+#define	_TIME_T_ long long
 #else
 #define	_TIME_T_ __int_least64_t
 #endif

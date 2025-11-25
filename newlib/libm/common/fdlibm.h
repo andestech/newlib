@@ -183,7 +183,7 @@ extern double __kernel_standard __P((double,double,int));
 extern double __kernel_sin __P((double,double,int));
 extern double __kernel_cos __P((double,double));
 extern double __kernel_tan __P((double,double,int));
-extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int,const __int32_t*));
+extern int    __kernel_rem_pio2 __P((double*,double*,int,int,int));
 
 /* Undocumented float functions.  */
 #ifdef _SCALB_INT

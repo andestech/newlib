@@ -9,6 +9,7 @@
 #include "semihost_fdtable.h"
 
 /* Read from a file.  */
+__attribute__((weak))
 ssize_t _read (int file, void *ptr, size_t len)
 {
   struct fdentry *fd =__get_fdentry (file);

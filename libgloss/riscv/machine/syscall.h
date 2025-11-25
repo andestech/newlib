@@ -50,6 +50,7 @@
 #define SYS_unlink 1026
 #define SYS_mkdir 1030
 #define SYS_access 1033
+#define SYS_rename 1034
 #define SYS_stat 1038
 #define SYS_lstat 1039
 #define SYS_time 1062

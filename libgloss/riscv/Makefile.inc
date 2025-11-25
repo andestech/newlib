@@ -7,6 +7,7 @@ multilibtool_DATA += \
 multilibtool_LIBRARIES += %D%/libgloss.a
 %C%_libgloss_a_CPPFLAGS = -I$(srcdir)/%D%
 %C%_libgloss_a_SOURCES = \
+	%D%/nanosleep.c \
 	%D%/sys_access.c \
 	%D%/sys_chdir.c \
 	%D%/sys_chmod.c \
@@ -38,15 +39,16 @@ multilibtool_LIBRARIES += %D%/libgloss.a
 	%D%/sys_unlink.c \
 	%D%/sys_utime.c \
 	%D%/sys_wait.c \
-	%D%/sys_write.c
+	%D%/sys_write.c \
+	%D%/sys_rename.c
 
 multilibtool_LIBRARIES += %D%/libsim.a
 %C%_libsim_a_CPPFLAGS = $(%C%_libgloss_a_CPPFLAGS) -DUSING_SIM_SPECS
 %C%_libsim_a_SOURCES = $(%C%_libgloss_a_SOURCES)
 
-multilibtool_LIBRARIES += %D%/libsemihost.a
-%C%_libsemihost_a_CPPFLAGS = -I$(srcdir)/%D%
-%C%_libsemihost_a_SOURCES = \
+multilibtool_LIBRARIES += %D%/libgloss_vh.a
+%C%_libgloss_vh_a_CPPFLAGS = -I$(srcdir)/%D%
+%C%_libgloss_vh_a_SOURCES = \
 	%D%/nanosleep.c \
 	%D%/sys_chdir.c \
 	%D%/sys_chmod.c \
@@ -58,21 +60,43 @@ multilibtool_LIBRARIES += %D%/libsemihost.a
 	%D%/sys_kill.c \
 	%D%/sys_utime.c \
 	%D%/sys_wait.c \
+	%D%/semihost-clock.c \
+	%D%/semihost-close.c \
+	%D%/semihost-errno.c \
+	%D%/semihost-exit_extended.c \
+	%D%/semihost-exit.c \
+	%D%/semihost-flen.c \
+	%D%/semihost-get_cmdline.c \
+	%D%/semihost-iserror.c \
+	%D%/semihost-istty.c \
+	%D%/semihost-open.c \
+	%D%/semihost-putc.c \
+	%D%/semihost-read.c \
+	%D%/semihost-remove.c \
+	%D%/semihost-rename.c \
+	%D%/semihost-seek.c \
 	%D%/semihost-sys_close.c \
 	%D%/semihost-sys_exit.c \
 	%D%/semihost-sys_fdtable.c \
 	%D%/semihost-sys_fstat.c \
 	%D%/semihost-sys_ftime.c \
+	%D%/semihost-sys_gettimeofday.c \
 	%D%/semihost-sys_isatty.c \
 	%D%/semihost-sys_link.c \
 	%D%/semihost-sys_lseek.c \
 	%D%/semihost-sys_open.c \
 	%D%/semihost-sys_read.c \
+	%D%/semihost-sys_rename.c \
 	%D%/semihost-sys_sbrk.c \
 	%D%/semihost-sys_stat.c \
 	%D%/semihost-sys_stat_common.c \
+	%D%/semihost-sys_times.c \
 	%D%/semihost-sys_unlink.c \
-	%D%/semihost-sys_write.c
+	%D%/semihost-sys_write.c \
+	%D%/semihost-system.c \
+	%D%/semihost-time.c \
+	%D%/semihost-write.c \
+	%D%/semihost-write0.c
 
 includemachinetooldir = $(tooldir)/include/machine
 includemachinetool_DATA = %D%/machine/syscall.h

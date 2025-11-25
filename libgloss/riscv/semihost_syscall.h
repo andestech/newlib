@@ -2,9 +2,12 @@
  * Copyright (C) 2020 Embecosm Limited
  * SPDX-License-Identifier: BSD-2-Clause
  */
+#include <stdint.h>
+
 #ifndef _INTERNAL_SYSCALL_H
 #define _INTERNAL_SYSCALL_H
 
+typedef uintptr_t sh_param_t;
 extern int errno;
 
 static inline long
@@ -18,7 +21,7 @@ __semihost_syscall (long id, long *data_block)
   asm volatile (
     ".balign 16             \n"
     ".option push           \n"
-    ".option norvc          \n"
+    ".option no16bit        \n"
     "slli zero, zero, 0x1f  \n"
     "ebreak                 \n"
     "srai zero, zero, 0x7   \n"

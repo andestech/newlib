@@ -221,11 +221,15 @@
 #if defined(__riscv_flen) || defined (__riscv_zfinx)
 # define _SUPPORTS_ERREXCEPT
 #endif
-#if (__riscv_flen == 64) || defined (__riscv_zdinx)
+#if (__riscv_flen != 32) || defined (__riscv_zdinx)
 # define __OBSOLETE_MATH_DEFAULT 0
 #else
 # define __OBSOLETE_MATH_DEFAULT 1
 #endif
+// switch off __OBSOLETE_MATH_DEFAULT when
+//    1. d extension ( __riscv_flen == 64 )
+//    2. Zdinx extension ( defined(__riscv_zdinx) )
+//    3. i extension ( !defined(__riscv_flen) )
 #endif
 
 #ifdef __i960__

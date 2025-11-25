@@ -19,7 +19,7 @@ extern int errno;
 #define SEMIHOST_MODE_APLUS 10
 
 /* Open a file.  */
-int
+__attribute__((weak)) int
 _open (const char *name, int flags, ...)
 {
   int fh;

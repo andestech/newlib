@@ -8,7 +8,7 @@
 #include "semihost_fdtable.h"
 
 /* Write to a file.  */
-ssize_t
+__attribute__((weak)) ssize_t
 _write (int file, const void *ptr, size_t len)
 {
   struct fdentry *fd =__get_fdentry (file);

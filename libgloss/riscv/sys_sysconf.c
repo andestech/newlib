@@ -3,7 +3,7 @@
 #include <time.h>
 
 /* Get configurable system variables.  */
-
+__attribute__((weak))
 long
 _sysconf(int name)
 {
@@ -14,4 +14,8 @@ _sysconf(int name)
     }
 
   return -1;
+}
+
+long sysconf(int name) {
+  return _sysconf(name);
 }
